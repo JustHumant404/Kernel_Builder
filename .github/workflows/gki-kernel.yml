@@ -155,13 +155,13 @@ jobs:
             COMMIT_HASH=$(git rev-parse --short HEAD)
             VERSION_DEFINITIONS=$(cat << EOF
             define get_ksu_version_full
-            \$1-$COMMIT_HASH-@JustHumant404
+            \\$1-$COMMIT_HASH-@JustHumant404
             endef
       
             KSU_VERSION_API := $KSU_API_VERSION
             KSU_VERSION_FULL := $KSU_API_VERSION-$COMMIT_HASH-@JustHumant404
             EOF
-            )
+                )
             sed -i '/define get_ksu_version_full/,/endef/d' kernel/Makefile
             sed -i '/KSU_VERSION_API :=/d' kernel/Makefile
             sed -i '/KSU_VERSION_FULL :=/d' kernel/Makefile
