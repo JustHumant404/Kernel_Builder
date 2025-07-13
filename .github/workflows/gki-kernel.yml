@@ -154,9 +154,9 @@ jobs:
             echo "KSU_API_VERSION=$KSU_API_VERSION" >> $GITHUB_ENV
             COMMIT_HASH=$(git rev-parse --short HEAD)
             VERSION_DEFINITIONS=$(cat << EOF
-              define get_ksu_version_full
-              \$1-$COMMIT_HASH-@JustHumant404
-              endef
+            define get_ksu_version_full
+            \$1-$COMMIT_HASH-@JustHumant404
+            endef
       
             KSU_VERSION_API := $KSU_API_VERSION
             KSU_VERSION_FULL := $KSU_API_VERSION-$COMMIT_HASH-@JustHumant404
