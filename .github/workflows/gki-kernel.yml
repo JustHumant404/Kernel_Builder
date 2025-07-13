@@ -155,7 +155,7 @@ jobs:
             COMMIT_HASH=$(git rev-parse --short HEAD)
             VERSION_DEFINITIONS=$(cat << EOF
               define get_ksu_version_full
-              $1-$COMMIT_HASH-@JustHumant404
+              \$1-$COMMIT_HASH-@JustHumant404
               endef
       
             KSU_VERSION_API := $KSU_API_VERSION
