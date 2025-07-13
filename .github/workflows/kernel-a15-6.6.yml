@@ -1,0 +1,53 @@
+name: Android15-6.6
+
+permissions:
+  contents: write
+  actions: write
+  
+on:
+  workflow_dispatch:
+    inputs:
+      kernelsu_variant:
+        description: "Select KernelSU"
+        required: true
+        type: choice
+        options:
+          - Next
+          - SukiSU
+        default: SukiSU
+      use_kpm:
+        description: 'Enable the KPM?'
+        required: true
+        type: boolean
+        default: false
+      use_bbr:
+        description: 'Enable the BBR Algorithm?'
+        required: true
+        type: boolean
+        default: true
+      use_proxy:
+        description: 'Add Proxy Performance Optimizations?'
+        required: true
+        type: boolean
+        default: false
+        
+jobs:
+  build-kernel-a15:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sub_level: "92"
+            os_patch_level: "2025-07"
+            
+    uses: ./.github/workflows/gki-kernel.yml
+    secrets: inherit
+    with:
+      android_version: "android15"
+      kernel_version: "6.6"
+      sub_level: ${{ matrix.sub_level }}
+      os_patch_level: ${{ matrix.os_patch_level }}
+      kernelsu_variant: ${{ inputs.kernelsu_variant }}
+      use_kpm: ${{ inputs.use_kpm }}
+      use_bbr: ${{ inputs.use_kpm }}
+      use_proxy: ${{ inputs.use_kpm }}
