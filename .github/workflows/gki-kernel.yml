@@ -1,7 +1,7 @@
-name: Build GKI
+name: GKI Kernel Build
 permissions:
-  contents: write  # Allow writing to repository contents (for pushing tags)
-  actions: write   # Allows triggering actions
+  contents: write
+  actions: write
 
 on:
   workflow_call:
@@ -32,7 +32,7 @@ on:
         type: boolean
         
 jobs:
-  build-gki-kernel:
+  build-kernel-kernelsu-susfs:
     runs-on: ubuntu-latest
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
@@ -106,7 +106,7 @@ jobs:
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
           git clone https://github.com/Xiaomichael/kernel_patches.git
-          git clone https://github.com/Wandi404/AnyKernel3.git
+          git clone https://github.com/JustHumant404/AnyKernel3.git
 
       - name: Initialize and Sync Kernel Source
         run: |
