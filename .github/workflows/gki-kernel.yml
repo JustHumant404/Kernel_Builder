@@ -398,7 +398,7 @@ jobs:
             *.img
             
       - name: Apply KPM Patch (SukiSU only)
-        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
+        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         run: |  
           cd $CONFIG/common/out/arch/arm64/boot
           TAG=$(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases | \jq -r 'map(select(.prerelease)) | first | .tag_name')
@@ -410,7 +410,7 @@ jobs:
           mv oImage Image
 
       - name: 📦 Make AnyKernel3 (with KPM)
-        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
+        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         run: |
          git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1      
          rm -rf ./AnyKernel3/.git
@@ -418,7 +418,7 @@ jobs:
          cp $CONFIG/common/out/arch/arm64/boot/Image ./AnyKernel3/
 
       - name: 📤 Upload AnyKernel3 (with KPM)
-        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
+        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         uses: actions/upload-artifact@v4
         with:
          name: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_KPM_${{ env.KSUVER }}_SuKiSU
