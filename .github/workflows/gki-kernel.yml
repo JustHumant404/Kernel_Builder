@@ -49,6 +49,9 @@ jobs:
 
       - name: list file 1
         run: ls -al .github/workflows
+
+      - name: list file 1
+        run: cp script/setup.bin ./
         
       - name: Maximize Build Space
         uses: easimon/maximize-build-space@master
