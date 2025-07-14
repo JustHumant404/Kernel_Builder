@@ -43,15 +43,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: list file 1
-        run: ls -al
-
-      - name: list file 1
-        run: ls -al .github/workflows
-
-      - name: list file 1
-        run: cp script/setup.bin ./
         
       - name: Maximize Build Space
         uses: easimon/maximize-build-space@master
@@ -178,7 +169,8 @@ jobs:
             cd ./KernelSU
             KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10700)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-            curl -L -o setup.bin https://github.com/${{ github.repository }}/raw/main/script/setup.bin
+            #curl -L -o setup.bin https://github.com/${{ github.repository }}/raw/main/script/setup.bin
+            cp "${GITHUB_WORKSPACE}/script/setup.bin" ./
             chmod +x setup.bin
           
             if [ ! -f "kernel/Makefile" ]; then
