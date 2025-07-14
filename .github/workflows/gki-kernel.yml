@@ -357,16 +357,18 @@ jobs:
           path: |
             *.zip
 
-      - name: 🤖 Get bot script
-        uses: actions/checkout@v4
-        with:
-         path: bot
+      #- name: 🤖 Get bot script
+      #  uses: actions/checkout@v4
+      #  with:
+      #   path: bot
          
       - name: 📤 Upload to telegram
         run: |
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+            curl -L -o buildbot.py https://github.com/${{ github.repository }}/raw/main/script/buildbot.py
+            chmod +x buildbot.py
             pip3 install telethon
-            python3 ./bot/script/buildbot.py "./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip"
+            python3 ./buildbot.py "./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip"
           fi
         env:
           CHAT_ID: ${{secrets.CHAT_ID}}
