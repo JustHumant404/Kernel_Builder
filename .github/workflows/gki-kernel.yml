@@ -27,7 +27,10 @@ on:
       use_bbr:
         required: true
         type: boolean
-      use_kpm:
+      boot_nokpm:
+        required: true
+        type: boolean
+      ak3_kpm:
         required: true
         type: boolean
         
@@ -39,17 +42,7 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: List File
-        run: ls -al
-
-      - name: Copy file
-        run: cp script/setup.bin ./
-        
+    steps: 
       - name: Maximize Build Space
         uses: easimon/maximize-build-space@master
         with:
@@ -101,6 +94,39 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-${{ inputs.android_version }}-
             ccache-${{ runner.os }}-
+
+      - name: Cache toolchain
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            kernel-build-tools
+            mkbootimg
+          key: toolchain-${{ runner.os }}-v1
+
+      - name: Download toolchain (if cache was not found)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          git clone https://android.googlesource.com/kernel/prebuilts/build-tools -b main-kernel-build-2024 --depth 1 kernel-build-tools
+          git clone https://android.googlesource.com/platform/system/tools/mkbootimg -b main-kernel-build-2024 --depth 1 mkbootimg
+
+      - name: Set environment variables
+        run: |
+          echo "AVBTOOL=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/bin/avbtool" >> $GITHUB_ENV
+          echo "MKBOOTIMG=$GITHUB_WORKSPACE/mkbootimg/mkbootimg.py" >> $GITHUB_ENV
+
+      - name: Set boot sign key
+        env:
+          BOOT_SIGN_KEY: ${{ secrets.BOOT_SIGN_KEY }}
+        run: |
+          if [ ! -z "$BOOT_SIGN_KEY" ]; then
+            echo "$BOOT_SIGN_KEY" > ./kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
+            echo "BOOT_SIGN_KEY_PATH=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
+          else
+            echo "BOOT_SIGN_KEY is not set. Using AOSP sign key..."
+            openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 > ./kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
+            echo "BOOT_SIGN_KEY_PATH=$GITHUB_WORKSPACE/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
+          fi
             
       - name: Install Repo
         run: |
@@ -116,7 +142,6 @@ jobs:
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
           git clone https://github.com/Xiaomichael/kernel_patches.git
-          git clone https://github.com/JustHumant404/AnyKernel3.git
 
       - name: Initialize and Sync Kernel Source
         run: |
@@ -175,8 +200,7 @@ jobs:
             cd ./KernelSU
             KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10700)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-            #curl -L -o setup.bin https://github.com/${{ github.repository }}/raw/main/script/setup.bin
-            #cp script/setup.bin ./
+            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/setup.bin -o setup.bin
             chmod +x setup.bin
           
             if [ ! -f "kernel/Makefile" ]; then
@@ -235,8 +259,6 @@ jobs:
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU" ]; then
             if [ "${{ inputs.use_kpm }}" == "true" ]; then
               echo "CONFIG_KPM=y" >> ./common/arch/arm64/configs/gki_defconfig
-              echo "CONFIG_KALLSYMS=y" >> ./common/arch/arm64/configs/gki_defconfig
-              echo "CONFIG_KALLSYMS_ALL=y" >> ./common/arch/arm64/configs/gki_defconfig
             fi
             echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_KSU_MANUAL_HOOK=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -338,11 +360,47 @@ jobs:
 
             make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole LD=ld.lld HOSTLD=ld.lld O=out KCFLAGS+=-O2 gki_defconfig || { echo "make defconfig failed"; exit 1; }
             make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole LD=ld.lld HOSTLD=ld.lld O=out KCFLAGS+=-O2 Image || { echo "make failed"; exit 1; }
+
+      - name: 📦 Make AnyKernel3 (without KPM)
+        run: |
+          git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1 AnyKernel3_NoKPM
+          rm -rf ./AnyKernel3_NoKPM/.git
+          rm -rf ./AnyKernel3_NoKPM/push.sh
+          cp $CONFIG/common/out/arch/arm64/boot/Image ./AnyKernel3_NoKPM/
+          if [ "${{ inputs.boot_nokpm }}" = "true" ]; then
+            zip -r "../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU" ./*    
+          fi
+          
+      - name: 📤 Upload AnyKernel3 (without KPM)
+        if: ${{ !inputs.boot_nokpm }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU
+          path: ./AnyKernel3_NoKPM/*
+
+      - name: 🛠️ Build Boot Image (without KPM)
+        if: ${{ inputs.boot_nokpm }}
+        run: |
+          cd $CONFIG/common/out/arch/arm64/boot
+          
+          echo "Building boot.img"
+          $MKBOOTIMG --header_version 4 --kernel Image --output boot.img
+          $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
+          cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img
+          
+      - name: Upload Build Artifacts
+        if: ${{ inputs.boot_nokpm }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.kernelsu_variant }}_kernel-${{ env.CONFIG }}
+          path: |
+            *.zip
+            *.img
             
       - name: Apply KPM Patch (SukiSU only)
-        if: ${{ inputs.use_kpm && inputs.kernelsu_variant == 'SukiSU' }}
+        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
         run: |  
-          cd "$CONFIG/common/out/arch/arm64/boot"
+          cd $CONFIG/common/out/arch/arm64/boot
           TAG=$(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases | \jq -r 'map(select(.prerelease)) | first | .tag_name')
           echo "Latest tag is: $TAG"
           curl -Ls -o patch_linux "https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/$TAG/patch_linux"
@@ -350,34 +408,26 @@ jobs:
           ./patch_linux
           rm -f Image
           mv oImage Image
-          
-      - name: Create ZIP Files for Different Formats
+
+      - name: 📦 Make AnyKernel3 (with KPM)
+        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
         run: |
-          cd ./AnyKernel3
+         git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1      
+         rm -rf ./AnyKernel3/.git
+         rm -rf ./AnyKernel3/push.sh
+         cp $CONFIG/common/out/arch/arm64/boot/Image ./AnyKernel3/
 
-          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip"
-          echo "Creating zip file: $ZIP_NAME..."
-          mv ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
-          zip -r "../$ZIP_NAME" ./*
-          #rm ./Image
-
-      - name: Upload Build Artifacts
+      - name: 📤 Upload AnyKernel3 (with KPM)
+        if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.kernelsu_variant }}_kernel-${{ env.CONFIG }}
-          path: |
-            *.zip
+         name: AK3_KPM_${{ env.KSUVER }}_${{ env.DEVICES_NAME }}_SuKiSU
+         path: ./AnyKernel3/*
 
-      #- name: 🤖 Get bot script
-      #  uses: actions/checkout@v4
-      #  with:
-      #   path: bot
-         
       - name: 📤 Upload to telegram
         run: |
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
-            curl -L -o buildbot.py https://github.com/${{ github.repository }}/raw/main/script/buildbot.py
-            chmod +x buildbot.py
+            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
             pip3 install telethon
             python3 ./buildbot.py "./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip"
           fi
