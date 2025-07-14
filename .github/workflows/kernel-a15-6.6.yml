@@ -25,7 +25,7 @@ on:
         required: true
         default: true
         type: boolean
-      nokpm_boot:
+      boot_nokpm:
         description: "Generate boot without KPM?"
         required: true
         default: false
@@ -53,6 +53,7 @@ jobs:
       sub_level: ${{ matrix.sub_level }}
       os_patch_level: ${{ matrix.os_patch_level }}
       kernelsu_variant: ${{ inputs.kernelsu_variant }}
-      use_kpm: ${{ inputs.use_kpm }}
       use_bbr: ${{ inputs.use_kpm }}
       use_proxy: ${{ inputs.use_kpm }}
+      boot_nokpm: ${{ inputs.boot_nokpm }}
+      ak3_kpm: ${{ inputs.ak3_kpm }}
