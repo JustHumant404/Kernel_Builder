@@ -72,7 +72,7 @@ jobs:
       
       - name: Install Dependencies
         run: |
-          sudo apt update -o Dir::Cache::archives="${{ env.APT_CACHE_DIR }}" -qq
+          sudo apt update -o Dir::Cache="${{ env.APT_CACHE_DIR }}" -qq
           sudo DEBIAN_FRONTEND=noninteractive apt install -yq --no-install-recommends \
             ccache python3 git curl build-essential libssl-dev bison flex libelf-dev
             
