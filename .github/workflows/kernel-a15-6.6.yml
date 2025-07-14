@@ -15,21 +15,26 @@ on:
           - Next
           - SukiSU
         default: SukiSU
-      use_kpm:
-        description: 'Enable the KPM?'
-        required: true
-        type: boolean
-        default: false
       use_bbr:
-        description: 'Enable the BBR Algorithm?'
+        description: "Enable the BBR Algorithm?"
         required: true
-        type: boolean
-        default: true
-      use_proxy:
-        description: 'Add Proxy Optimizations?'
-        required: true
-        type: boolean
         default: false
+        type: boolean
+      use_proxy:
+        description: "Add Proxy Optimizations?"
+        required: true
+        default: true
+        type: boolean
+      nokpm_boot:
+        description: "Generate boot without KPM?"
+        required: true
+        default: false
+        type: boolean
+      ak3_kpm:
+        description: "Generate AK3 with KPM? (disable this if you want only AK3 without KPM)"
+        required: true
+        default: true
+        type: boolean
         
 jobs:
   build-kernel-a15:
