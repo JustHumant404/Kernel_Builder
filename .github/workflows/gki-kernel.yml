@@ -170,7 +170,7 @@ jobs:
             KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10700)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             #curl -L -o setup.bin https://github.com/${{ github.repository }}/raw/main/script/setup.bin
-            cp "${GITHUB_WORKSPACE}/script/setup.bin" ./
+            cp script/setup.bin ./
             chmod +x setup.bin
           
             if [ ! -f "kernel/Makefile" ]; then
