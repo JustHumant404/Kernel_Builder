@@ -43,6 +43,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: List File
+        run: ls -al
+
+      - name: Copy file
+        run: cp script/setup.bin ./
         
       - name: Maximize Build Space
         uses: easimon/maximize-build-space@master
