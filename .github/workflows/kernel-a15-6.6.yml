@@ -18,23 +18,23 @@ on:
       use_bbr:
         description: "Enable the BBR Algorithm?"
         required: true
-        default: false
         type: boolean
+        default: false
       use_proxy:
         description: "Add Proxy Optimizations?"
         required: true
-        default: true
         type: boolean
+        default: true
       boot_nokpm:
         description: "Generate boot without KPM?"
         required: true
-        default: false
         type: boolean
+        default: false
       ak3_kpm:
         description: "Generate AK3 with KPM? (disable this if you want only AK3 without KPM)"
         required: true
-        default: true
         type: boolean
+        default: true
         
 jobs:
   build-kernel-a15:
