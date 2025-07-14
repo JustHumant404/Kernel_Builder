@@ -117,6 +117,7 @@ jobs:
           git clone https://github.com/ShirkNeko/SukiSU_patch.git
           git clone https://github.com/Xiaomichael/kernel_patches.git
           git clone https://github.com/JustHumant404/AnyKernel3.git
+          ls -al
           cp script/setup.bin ./
 
       - name: Initialize and Sync Kernel Source
