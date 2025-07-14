@@ -40,6 +40,16 @@ jobs:
       CCACHE_HARDLINK: "true"
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: list file 1
+        run: ls -al
+
+      - name: list file 1
+        run: ls -al .github/workflows
+        
       - name: Maximize Build Space
         uses: easimon/maximize-build-space@master
         with:
