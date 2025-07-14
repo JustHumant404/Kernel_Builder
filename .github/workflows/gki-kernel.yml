@@ -421,7 +421,7 @@ jobs:
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == "SukiSU" }}
         uses: actions/upload-artifact@v4
         with:
-         name: AK3_KPM_${{ env.KSUVER }}_${{ env.DEVICES_NAME }}_SuKiSU
+         name: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_KPM_${{ env.KSUVER }}_SuKiSU
          path: ./AnyKernel3/*
 
       - name: 📤 Upload to telegram
