@@ -368,7 +368,7 @@ jobs:
           rm -rf ./AnyKernel3_NoKPM/push.sh
           cp $CONFIG/common/out/arch/arm64/boot/Image ./AnyKernel3_NoKPM/
           if [ "${{ inputs.boot_nokpm }}" = "true" ]; then
-            zip -r "../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU" ./*    
+            zip -r "../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU.zip" ./*    
           fi
           
       - name: 📤 Upload AnyKernel3 (without KPM)
