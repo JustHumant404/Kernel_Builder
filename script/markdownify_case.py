@@ -127,8 +127,8 @@ print(converted)
 
 # Send to telegram
 load_dotenv()
-telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", None)
-chat_id = os.getenv("TELEGRAM_CHAT_ID", None)
+telegram_bot_token = os.getenv("BOT_TOKEN", None)
+chat_id = os.getenv("CHATT_ID", None)
 bot = TeleBot(telegram_bot_token)
 bot.send_message(
     chat_id,
