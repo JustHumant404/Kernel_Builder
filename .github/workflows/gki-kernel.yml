@@ -369,7 +369,7 @@ jobs:
           cd ./AnyKernel3_NoKPM
           ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU.zip"
           echo "Creating zip file: $ZIP_NAME..."
-          mv ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
+          cp ./$CONFIG/common/out/arch/arm64/boot/Image ./Image
           zip -q -r "../$ZIP_NAME" ./*
           
       - name: 📤 Upload AnyKernel3 (without KPM)
@@ -419,7 +419,7 @@ jobs:
          cd ./AnyKernel3_KPM
          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_KPM_${{ env.KSUVER }}_SuKiSU.zip"
          echo "Creating zip file: $ZIP_NAME..."
-         mv ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
+         cp ./$CONFIG/common/out/arch/arm64/boot/Image ./Image
          zip -q -r "../$ZIP_NAME" ./*
          
       - name: 📤 Upload AnyKernel3 (with KPM)
