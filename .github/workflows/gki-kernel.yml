@@ -366,8 +366,11 @@ jobs:
           git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1 AnyKernel3_NoKPM
           rm -rf ./AnyKernel3_NoKPM/.git
           rm -rf ./AnyKernel3_NoKPM/push.sh
-          cp $CONFIG/common/out/arch/arm64/boot/Image ./AnyKernel3_NoKPM/
-          zip -r "../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU.zip" ./*
+          cd ./AnyKernel3_NoKPM
+          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU.zip"
+          echo "Creating zip file: $ZIP_NAME..."
+          mv ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
+          zip -q -r "../$ZIP_NAME" ./*
           
       - name: 📤 Upload AnyKernel3 (without KPM)
         if: ${{ !inputs.boot_nokpm }}
@@ -410,12 +413,15 @@ jobs:
       - name: 📦 Make AnyKernel3 (with KPM)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         run: |
-         git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1      
-         rm -rf ./AnyKernel3/.git
-         rm -rf ./AnyKernel3/push.sh
-         cp $CONFIG/common/out/arch/arm64/boot/Image ./AnyKernel3/
-         zip -r "../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU.zip" ./*
-
+         git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1 AnyKernel3_KPM  
+         rm -rf ./AnyKernel3_KPM/.git
+         rm -rf ./AnyKernel3_KPM/push.sh
+         cd ./AnyKernel3_KPM
+         ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_KPM_${{ env.KSUVER }}_SuKiSU.zip"
+         echo "Creating zip file: $ZIP_NAME..."
+         mv ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
+         zip -q -r "../$ZIP_NAME" ./*
+         
       - name: 📤 Upload AnyKernel3 (with KPM)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         uses: actions/upload-artifact@v4
