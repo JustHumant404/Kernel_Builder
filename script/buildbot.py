@@ -16,7 +16,6 @@ MSG_TEMPLATE = """
 ```Kernel Info
 kernelver: {kernelversion}
 KsuVersion: {Ksuver}
-KPM: {kpm}
 ```
 """.strip()
 
