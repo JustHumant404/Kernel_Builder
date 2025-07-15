@@ -221,7 +221,7 @@ jobs:
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/setup.sh -o setup.sh
             chmod +x setup.sh
-            ./setup.bin
+            ./setup.sh
           else
             echo "Invalid KernelSU variant selected!"
             exit 1
