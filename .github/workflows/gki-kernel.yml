@@ -462,6 +462,7 @@ jobs:
             python3 ./buildbot.py "${files[@]}"
             python3 ./bot.py "${files[@]}"
           fi
+        shell: bash
         env:
           CHAT_ID: ${{secrets.CHAT_ID}}
           BOT_TOKEN: ${{secrets.BOT_TOKEN}}
