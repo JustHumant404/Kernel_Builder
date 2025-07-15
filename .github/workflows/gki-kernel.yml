@@ -77,7 +77,7 @@ jobs:
         run: |
           sudo apt update -o Dir::Cache="${{ env.APT_CACHE_DIR }}" -qq
           sudo DEBIAN_FRONTEND=noninteractive apt install -yq --no-install-recommends \
-            ccache python3 python git curl build-essential libssl-dev bison flex libelf-dev
+            ccache python3 git curl build-essential libssl-dev bison flex libelf-dev
             
       - name: Set up ccache
         run: |
