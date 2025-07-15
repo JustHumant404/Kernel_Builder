@@ -452,3 +452,4 @@ jobs:
           BOT_TOKEN: ${{secrets.BOT_TOKEN}}
           MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
           PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
+          KERNELVER: ${{ inputs.android_version }} ${{ inputs.kernel_version }}.${{ inputs.sub_level }}
