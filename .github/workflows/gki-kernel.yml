@@ -380,7 +380,7 @@ jobs:
           rm -rf ./AnyKernel3_NoKPM/.git
           rm -rf ./AnyKernel3_NoKPM/push.sh
           cd ./AnyKernel3_NoKPM
-          ZIP_NAME="AK3_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}.zip"
+          ZIP_NAME="AnyKernel3_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}.zip"
           echo "Creating zip file: $ZIP_NAME..."
           cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
           zip -q -r "../$ZIP_NAME" ./*
@@ -389,7 +389,7 @@ jobs:
         if: ${{ !inputs.boot_nokpm }}
         uses: actions/upload-artifact@v4
         with:
-          name: AK3_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
+          name: AnyKernel3_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
           path: ./AnyKernel3_NoKPM/*
 
       - name: 🛠️ Build Boot Image (without KPM)
@@ -398,7 +398,7 @@ jobs:
           cd $CONFIG/common/out/arch/arm64/boot
           
           echo "Building boot.img"
-          BOOT_NAME="BOOT_NoKPM_${{ env.KSUVER }}_SUKISU.img"
+          BOOT_NAME="Boot_NoKPM_${{ env.KSUVER }}_SUKISU.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           #cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img
@@ -437,7 +437,7 @@ jobs:
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         uses: actions/upload-artifact@v4
         with:
-         name: AK3_KPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
+         name: AnyKernel3_KPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
          path: ./AnyKernel3_KPM/*
 
       - name: 📤 Upload to telegram
