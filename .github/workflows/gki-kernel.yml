@@ -429,11 +429,12 @@ jobs:
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
             pip3 install telethon
-            echo "[+] Aktifkan nullglob agar wildcard tidak error"
+            
+            echo "[🗂] Daftar file di direktori:"
+            ls -lh .
             shopt -s nullglob
-
             echo "[+] Cari semua file SuKiSU"
-            files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_SuKiSU.*)
+            files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
 
             if [ ${#files[@]} -eq 0 ]; then
               echo "❌ Tidak ada file SuKiSU ditemukan!"
