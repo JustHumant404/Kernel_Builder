@@ -23,7 +23,6 @@ SUSFS ඞ: v1.5.9
 ```
 """).strip()
 
-
 def get_caption():
     msg = MSG_TEMPLATE.format(
         kernelversion=KERNELVER,
@@ -33,7 +32,6 @@ def get_caption():
     if len(msg) > 1024:
         return f"{kernelversion}"
     return msg
-
 
 def check_environ():
     global CHAT_ID, MESSAGE_THREAD_ID
@@ -58,16 +56,6 @@ def check_environ():
         MESSAGE_THREAD_ID = None
     get_versions()
 
-def get_versions():
-    global kernelversion,ksuver
-    if not PATHKERNEL:
-        raise EnvironmentError("Environment variable 'PATHKERNEL' is not set or is empty.")
-    current_work=os.getcwd()
-    os.chdir(os.path.join(current_work, PATHKERNEL, "common"))
-    os.chdir(os.getcwd()+"/../KernelSU")
-    ksuver=os.popen("echo $(git describe --tags $(git rev-list --tags --max-count=1))-$(git rev-parse --short HEAD)@$(git branch --show-current)").read().strip()
-    os.chdir(current_work)
-
 async def main():
     print("[+] Uploading to telegram")
     check_environ()
@@ -87,7 +75,7 @@ async def main():
         print(caption)
         print("---")
         print("[+] Sending")
-        await bot.send_file(entity=CHAT_ID, file=files, caption=caption, reply_to=MESSAGE_THREAD_ID, parse_mode="Markdown")
+        await bot.send_file(entity=CHAT_ID, file=files, caption=caption, reply_to=MESSAGE_THREAD_ID, parse_mode="MarkdownV2")
         print("[+] Done!")
 
 if __name__ == "__main__":
