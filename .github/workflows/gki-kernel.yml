@@ -429,9 +429,22 @@ jobs:
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
             pip3 install telethon
-            python3 ./buildbot.py ./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_SuKiSU.*
+            echo "[+] Aktifkan nullglob agar wildcard tidak error"
+            shopt -s nullglob
+
+            echo "[+] Cari semua file SuKiSU"
+            files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_SuKiSU.*)
+
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "❌ Tidak ada file SuKiSU ditemukan!"
+              exit 1
+            fi
+            
+            echo "[+] Kirim ${#files[@]} file ke Telegram..."
+            python3 ./buildbot.py "${files[@]}"
             #python3 ./buildbot.py ./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip
           fi
+        shell: bash
         env:
           CHAT_ID: ${{secrets.CHAT_ID}}
           BOT_TOKEN: ${{secrets.BOT_TOKEN}}
