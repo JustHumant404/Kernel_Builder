@@ -195,6 +195,25 @@ jobs:
           if [ "${{ inputs.kernelsu_variant }}" == "Next" ]; then
             echo "Applying SUSFS patches for KernelSU Next..."
             cd ./KernelSU-Next
+            
+            # Copy KernelSU-Next patches
+            cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./
+            cp ../../kernel_patches/next/susfs_fix_patches/v1.5.9/fix_apk_sign.c.patch ./
+            cp ../../kernel_patches/next/susfs_fix_patches/v1.5.9/fix_core_hook.c.patch ./
+            cp ../../kernel_patches/next/susfs_fix_patches/v1.5.9/fix_selinux.c.patch ./
+            cp ../../kernel_patches/next/susfs_fix_patches/v1.5.9/fix_ksud.c.patch ./
+            cp ../../kernel_patches/next/susfs_fix_patches/v1.5.9/fix_rules.c.patch ./
+            cp ../../kernel_patches/next/susfs_fix_patches/v1.5.9/fix_sucompat.c.patch ./
+            patch -p1 --forward --fuzz=3 < 10_enable_susfs_for_ksu.patch || true
+            patch -p1 --forward --fuzz=3 < fix_apk_sign.c.patch
+            patch -p1 --forward --fuzz=3 < fix_core_hook.c.patch
+            patch -p1 --forward --fuzz=3 < fix_selinux.c.patch
+            patch -p1 --forward --fuzz=3 < fix_ksud.c.patch
+            patch -p1 --forward --fuzz=3 < fix_rules.c.patch
+            patch -p1 --forward --fuzz=3 < fix_sucompat.c.patch
+            
+            KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+            echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU" ]; then
             echo "Applying SUSFS patches for SukiSU..."
             cd ./KernelSU
@@ -367,7 +386,7 @@ jobs:
           rm -rf ./AnyKernel3_NoKPM/.git
           rm -rf ./AnyKernel3_NoKPM/push.sh
           cd ./AnyKernel3_NoKPM
-          ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU.zip"
+          ZIP_NAME="AK3_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}.zip"
           echo "Creating zip file: $ZIP_NAME..."
           cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
           zip -q -r "../$ZIP_NAME" ./*
@@ -376,7 +395,7 @@ jobs:
         if: ${{ !inputs.boot_nokpm }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_NoKPM_${{ env.KSUVER }}_SuKiSU
+          name: AK3_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
           path: ./AnyKernel3_NoKPM/*
 
       - name: 🛠️ Build Boot Image (without KPM)
@@ -385,13 +404,13 @@ jobs:
           cd $CONFIG/common/out/arch/arm64/boot
           
           echo "Building boot.img"
-          BOOT_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img"
+          BOOT_NAME="BOOT_NoKPM_${{ env.KSUVER }}_SUKISU.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           #cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img
           cp ./$BOOT_NAME "${GITHUB_WORKSPACE}/"
           
-      - name: Upload Build Artifacts
+      - name: 📤 Upload Boot & AnyKernel3 (without KPM)
         if: ${{ inputs.boot_nokpm }}
         uses: actions/upload-artifact@v4
         with:
@@ -418,17 +437,13 @@ jobs:
          git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1 AnyKernel3_KPM  
          rm -rf ./AnyKernel3_KPM/.git
          rm -rf ./AnyKernel3_KPM/push.sh
-         cd ./AnyKernel3_KPM
-         ZIP_NAME="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_KPM_${{ env.KSUVER }}_SuKiSU.zip"
-         echo "Creating zip file: $ZIP_NAME..."
          cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
-         zip -q -r "../$ZIP_NAME" ./*
          
       - name: 📤 Upload AnyKernel3 (with KPM)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         uses: actions/upload-artifact@v4
         with:
-         name: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_AK3_KPM_${{ env.KSUVER }}_SuKiSU
+         name: AK3_KPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
          path: ./AnyKernel3_KPM/*
 
       - name: 📤 Upload to telegram
@@ -437,19 +452,19 @@ jobs:
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
             pip3 install telethon
             
-            #shopt -s nullglob
             files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
             if [ ${#files[@]} -eq 0 ]; then
               echo "❌ Tidak ada file SuKiSU ditemukan!"
               exit 1
             fi
-            
             python3 ./buildbot.py "${files[@]}"
           fi
-        shell: bash
         env:
           CHAT_ID: ${{secrets.CHAT_ID}}
           BOT_TOKEN: ${{secrets.BOT_TOKEN}}
           MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
           PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
-          KERNELVER: ${{ inputs.android_version }} ${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          KERNELVER: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          DRIVERKSU: ${{ inputs.kernelsu_variant }}
+          KSUVERSION: ${{ env.KSUVER }}
+          
