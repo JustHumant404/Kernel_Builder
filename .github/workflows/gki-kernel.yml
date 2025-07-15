@@ -448,27 +448,23 @@ jobs:
 
       - name: 📤 Upload to telegram
         run: |
-          #if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
-            #curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
-            #pip3 install telethon
+          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
+            pip3 install telethon
             
-            #files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
-            #if [ ${#files[@]} -eq 0 ]; then
-              #echo "❌ Tidak ada file SuKiSU ditemukan!"
-              #exit 1
-            #fi
-            #python3 ./buildbot.py "${files[@]}"
-          #fi
-          curl -LSs https://github.com/${{ github.repository }}/raw/main/script/markdownify_case.py -o markdownify.py
-          pip install telegramify-markdown
-          pip install telegramify-markdown[mermaid]
-          python ./markdownify.py
-        #env:
-          #CHAT_ID: ${{secrets.CHAT_ID}}
-          #BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-          #MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
-          #PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
-          #KERNELVER: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
-          #DRIVERKSU: ${{ inputs.kernelsu_variant }}
-          #KSUVERSION: ${{ env.KSUVER }}
+            files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "❌ Tidak ada file SuKiSU ditemukan!"
+              exit 1
+            fi
+            python3 ./buildbot.py "${files[@]}"
+          fi
+        env:
+          CHAT_ID: ${{secrets.CHAT_ID}}
+          BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+          MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
+          PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
+          KERNELVER: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          DRIVERKSU: ${{ inputs.kernelsu_variant }}
+          KSUVERSION: ${{ env.KSUVER }}
           
