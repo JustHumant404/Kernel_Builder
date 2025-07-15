@@ -437,7 +437,7 @@ jobs:
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
             pip3 install telethon
             
-            shopt -s nullglob
+            #shopt -s nullglob
             files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
             if [ ${#files[@]} -eq 0 ]; then
               echo "❌ Tidak ada file SuKiSU ditemukan!"
