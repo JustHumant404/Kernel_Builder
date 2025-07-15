@@ -219,9 +219,9 @@ jobs:
             cd ./KernelSU
             KSU_VERSION=$(expr $(git rev-list --count main) "+" 10700)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/setup.sh -o setup.sh
-            chmod +x setup.sh
-            ./setup.sh
+            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/setup.bin -o setup.bin
+            chmod +x setup.bin
+            ./setup.bin
           else
             echo "Invalid KernelSU variant selected!"
             exit 1
