@@ -54,7 +54,6 @@ def check_environ():
             exit(1)
     else:
         MESSAGE_THREAD_ID = None
-    get_versions()
 
 async def main():
     print("[+] Uploading to telegram")
