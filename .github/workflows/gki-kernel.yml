@@ -389,7 +389,7 @@ jobs:
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           #cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img
-          cp ./$BOOT_NAME ${GITHUB_WORKSPACE}
+          cp ./$BOOT_NAME "${GITHUB_WORKSPACE}/"
           
       - name: Upload Build Artifacts
         if: ${{ inputs.boot_nokpm }}
