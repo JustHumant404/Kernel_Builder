@@ -389,7 +389,7 @@ jobs:
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           #cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img
-          mv ../$BOOT_NAME ./*
+          mv ./$BOOT_NAME ../*
           
       - name: Upload Build Artifacts
         if: ${{ inputs.boot_nokpm }}
@@ -437,20 +437,14 @@ jobs:
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
             pip3 install telethon
             
-            echo "[🗂] Daftar file di direktori:"
-            ls -lh .
             shopt -s nullglob
-            echo "[+] Cari semua file SuKiSU"
             files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
-
             if [ ${#files[@]} -eq 0 ]; then
               echo "❌ Tidak ada file SuKiSU ditemukan!"
               exit 1
             fi
             
-            echo "[+] Kirim ${#files[@]} file ke Telegram..."
             python3 ./buildbot.py "${files[@]}"
-            #python3 ./buildbot.py ./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.os_patch_level }}-AnyKernel3.zip
           fi
         shell: bash
         env:
