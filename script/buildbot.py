@@ -18,7 +18,7 @@ MSG_TEMPLATE = textwrap.dedent(r"""
 **New Build Published!**
 ```Kernel Information
 KernelVer: {kernelversion}
-DriverKSU: {driverksu} ({ksuver])
+DriverKSU: {driverksu} ({ksuver})
 SUSFS ඞ: v1.5.9
 ```
 """).strip()
