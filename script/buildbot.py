@@ -13,7 +13,8 @@ KPM = os.environ.get("KPM")
 PATHKERNEL = os.environ.get("PATHKERNEL")
 MSG_TEMPLATE = """
 **New Build Published!**
-```kernelver: {kernelversion}
+```Kernel Info
+kernelver: {kernelversion}
 KsuVersion: {Ksuver}
 KPM: {kpm}
 ```
@@ -106,7 +107,7 @@ async def main():
         print(caption)
         print("---")
         print("[+] Sending")
-        await bot.send_file(entity=CHAT_ID, file=files, caption=caption, reply_to=MESSAGE_THREAD_ID, parse_mode="markdown")
+        await bot.send_file(entity=CHAT_ID, file=files, caption=caption, reply_to=MESSAGE_THREAD_ID, parse_mode="Markdown")
         print("[+] Done!")
 
 if __name__ == "__main__":
