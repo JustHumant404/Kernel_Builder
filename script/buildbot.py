@@ -9,11 +9,11 @@ API_HASH = "f1809f81c3bea88dcd8efda067189539"
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 MESSAGE_THREAD_ID = os.environ.get("MESSAGE_THREAD_ID")
-KPM = os.environ.get("KPM")
+KERNELVER = os.environ.get("KERNELVER")
 PATHKERNEL = os.environ.get("PATHKERNEL")
 MSG_TEMPLATE = """
 **New Build Published!**
-```Kernel Info
+```Kernel Information
 kernelver: {kernelversion}
 KsuVersion: {Ksuver}
 ```
@@ -22,8 +22,7 @@ KsuVersion: {Ksuver}
 
 def get_caption():
     msg = MSG_TEMPLATE.format(
-        kernelversion=kernelversion,
-        kpm=KPM,
+        kernelversion=KERNELVER,
         Ksuver=ksuver,
     )
     if len(msg) > 1024:
@@ -54,35 +53,12 @@ def check_environ():
         MESSAGE_THREAD_ID = None
     get_versions()
 
-def get_kernel_versions():
-    version=""
-    patchlevel=""
-    sublevel=""
-
-    try:
-        with open("Makefile",'r') as file:
-            for line in file:
-                if line.startswith("VERSION"):
-                    version = line.split('=')[1].strip()
-                elif line.startswith("PATCHLEVEL"):
-                    patchlevel = line.split('=')[1].strip()
-                elif line.startswith("SUBLEVEL"):
-                    sublevel = line.split('=')[1].strip()
-                elif line.startswith("#"): # skip comments
-                    continue
-                else:
-                    break
-    except FileNotFoundError:
-        raise
-    return f"{version}.{patchlevel}.{sublevel}"
-
 def get_versions():
     global kernelversion,ksuver
     if not PATHKERNEL:
         raise EnvironmentError("Environment variable 'PATHKERNEL' is not set or is empty.")
     current_work=os.getcwd()
     os.chdir(os.path.join(current_work, PATHKERNEL, "common"))
-    kernelversion=get_kernel_versions()
     os.chdir(os.getcwd()+"/../KernelSU")
     ksuver=os.popen("echo $(git describe --tags $(git rev-list --tags --max-count=1))-$(git rev-parse --short HEAD)@$(git branch --show-current)").read().strip()
     os.chdir(current_work)
