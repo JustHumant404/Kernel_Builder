@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import textwrap
 from telethon import TelegramClient
 
 API_ID = 27075271
@@ -11,19 +12,23 @@ CHAT_ID = os.environ.get("CHAT_ID")
 MESSAGE_THREAD_ID = os.environ.get("MESSAGE_THREAD_ID")
 KERNELVER = os.environ.get("KERNELVER")
 PATHKERNEL = os.environ.get("PATHKERNEL")
-MSG_TEMPLATE = """
+KSUVER = os.environ.get("KSUVERSION")
+DRIVERKSU = os.environ.get("DRIVERKSU")
+MSG_TEMPLATE = textwrap.dedent(r"""
 **New Build Published!**
 ```Kernel Information
-kernelver: {kernelversion}
-KsuVersion: {Ksuver}
+KernelVer: {kernelversion}
+DriverKSU: {driverksu} ({ksuver])
+SUSFS ඞ: v1.5.9
 ```
-""".strip()
+""").strip()
 
 
 def get_caption():
     msg = MSG_TEMPLATE.format(
         kernelversion=KERNELVER,
-        Ksuver=ksuver,
+        driverksu=DRIVERKSU,
+        ksuver=KSUVER,
     )
     if len(msg) > 1024:
         return f"{kernelversion}"
