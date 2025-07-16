@@ -54,7 +54,7 @@ jobs:
 
       - name: Set CONFIG
         run: |
-          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}"
+          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}"
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
           echo "CONFIG set to: $CONFIG"
 
@@ -67,7 +67,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.APT_CACHE_DIR }}
-          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}"
           restore-keys: |
             apt-cache-${{ runner.os }}-
       
@@ -82,14 +82,15 @@ jobs:
           ccache --version
           ccache --max-size=2G
           ccache --set-config=compression=true
-          echo "CCACHE_DIR=$HOME/.ccache_${{ inputs.android_version }}-${{ inputs.kernel_version }}" >> $GITHUB_ENV
+          echo "CCACHE_DIR=$HOME/.ccache_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}" >> $GITHUB_ENV
           
       - name: Restore ccache from cache
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          key: ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
           restore-keys: |
+            ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.
             ccache-${{ runner.os }}-${{ inputs.android_version }}-
             ccache-${{ runner.os }}-
 
@@ -345,7 +346,7 @@ jobs:
           rm -rf ./AnyKernel3_NoKPM/.git
           rm -rf ./AnyKernel3_NoKPM/push.sh
           cd ./AnyKernel3_NoKPM
-          ZIP_NAME="AnyKernel3_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}.zip"
+          ZIP_NAME="AnyKernel3_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.$SUBLEVEL.zip"
           echo "Creating zip file: $ZIP_NAME..."
           cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
           zip -q -r "../$ZIP_NAME" ./*
@@ -354,7 +355,7 @@ jobs:
         if: ${{ !inputs.boot_nokpm }}
         uses: actions/upload-artifact@v4
         with:
-          name: AnyKernel3_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          name: AnyKernel3_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.$SUBLEVEL
           path: ./AnyKernel3_NoKPM/*
 
       - name: 🛠️ Build Boot Image (without KPM)
@@ -363,7 +364,7 @@ jobs:
           cd $CONFIG/common/out/arch/arm64/boot
           
           echo "Building boot.img"
-          BOOT_NAME="Boot_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}.img"
+          BOOT_NAME="Boot_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.$SUBLEVEL.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           cp ./$BOOT_NAME "${GITHUB_WORKSPACE}/"
@@ -401,7 +402,7 @@ jobs:
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU-Ultra' }}
         uses: actions/upload-artifact@v4
         with:
-         name: AnyKernel3_KPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+         name: AnyKernel3_KPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.$SUBLEVEL
          path: ./AnyKernel3_KPM/*
 
       - name: "📦 Package files | 打包文件"
@@ -409,7 +410,7 @@ jobs:
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
           ```Kernel-Information
-          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.$SUBLEVEL
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
           SUSFS ඞ: v1.5.9
           ```
