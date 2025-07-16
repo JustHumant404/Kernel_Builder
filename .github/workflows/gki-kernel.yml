@@ -4,14 +4,22 @@ permissions:
   actions: write
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       android_version:
+        description: "Select Android version"
         required: true
-        type: string
+        type: choice
+        options:
+          - android15
+        default: android15
       kernel_version:
+        description: "Select Android version"
         required: true
-        type: string
+        type: choice
+        options:
+          - '6.6'
+        default: '6.6'
       sub_level:
         required: true
         type: string
@@ -19,19 +27,27 @@ on:
         required: true
         type: string
       kernelsu_variant:
+        description: "Select KernelSU"
         required: true
-        type: string
-      use_proxy:
-        required: true
-        type: boolean
+        type: choice
+        options:
+          - Next
+          - SukiSU
+        default: SukiSU
       use_bbr:
+        description: "Enable the BBR Algorithm?"
         required: true
+        default: false
         type: boolean
       boot_nokpm:
+        description: "Generate boot without KPM?"
         required: true
+        default: false
         type: boolean
       ak3_kpm:
+        description: "Generate AK3 with KPM? (disable this if you want only AK3 without KPM)"
         required: true
+        default: true
         type: boolean
         
 jobs:
@@ -56,7 +72,11 @@ jobs:
 
       - name: Set CONFIG Environment Variable
         run: |
-          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}"
+          if [ "${{ inputs.kernel_version }}" == "6.6" ]; then
+            echo "sub_level=98" >> $GITHUB_ENV
+            echo "os_patch_level=2025-07" >> $GITHUB_ENV
+          fi
+          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ env.sub_level }}"
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
           echo "CONFIG set to: $CONFIG"
 
@@ -140,8 +160,7 @@ jobs:
 
           # Clone repositories using the branch names
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}
-          git clone https://github.com/ShirkNeko/SukiSU_patch.git
-          git clone https://github.com/Xiaomichael/kernel_patches.git
+          git clone https://github.com/SiPetualang/kernel_patches.git
 
       - name: Initialize and Sync Kernel Source
         run: |
@@ -150,7 +169,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}"
+          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ env.os_patch_level }}"
           repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
           DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
@@ -191,6 +210,7 @@ jobs:
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
           cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
           cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+          cp ../../kernel_patches/69_hide_stuff.patch ./common/
 
           if [ "${{ inputs.kernelsu_variant }}" == "Next" ]; then
             echo "Applying SUSFS patches for KernelSU Next..."
@@ -229,6 +249,7 @@ jobs:
 
           cd ../common
           patch -p1 --fuzz=3 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
+          patch -p1 -F 3 < 69_hide_stuff.patch
           
       - name: Apply Hooks Patches
         run: |
@@ -241,23 +262,10 @@ jobs:
             patch -p1 -F 3 < scope_min_manual_hooks_v1.4.patch
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU" ]; then
             echo "Applying hooks for SukiSU..."
-            cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
+            cp ../../kernel_patches/sukisu/syscall_hooks.patch ./
             patch -p1 -F 3 < syscall_hooks.patch
           fi
 
-      - name: Apply Hide Stuff Patches
-        run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd $CONFIG/common
-          
-          if [ "${{ inputs.kernelsu_variant }}" == "SukiSU" ]; then
-            cp ../../SukiSU_patch/69_hide_stuff.patch ./
-            patch -p1 -F 3 < 69_hide_stuff.patch
-          else
-            cp ../../kernel_patches/69_hide_stuff.patch ./
-            patch -p1 -F 3 < 69_hide_stuff.patch
-          fi
-          
       - name: Add Configuration Settings
         run: |
           echo "Changing to configuration directory: $CONFIG..."
@@ -314,33 +322,6 @@ jobs:
             echo "CONFIG_DEFAULT_BBR=y" >> ./common/arch/arm64/configs/gki_defconfig
           fi
           
-          if [ "${{ inputs.use_proxy }}" == "true" ]; then
-            # Proxy Configuration
-            echo "CONFIG_BPF_STREAM_PARSER=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_NETFILTER_XT_SET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_MAX=65534" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_BITMAP_IP=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_BITMAP_IPMAC=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_BITMAP_PORT=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_IP=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_IPMARK=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_IPPORT=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_IPPORTIP=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_IPPORTNET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_IPMAC=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_MAC=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_NETPORTNET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_NET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_NETNET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_NETPORT=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_HASH_NETIFACE=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP_SET_LIST_SET=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP6_NF_NAT=y" >> ./common/arch/arm64/configs/gki_defconfig
-            echo "CONFIG_IP6_NF_TARGET_MASQUERADE=y" >> ./common/arch/arm64/configs/gki_defconfig
-          fi
-          
           # Remove check_defconfig
           sed -i 's/check_defconfig//' ./common/build.config.gki
 
@@ -376,7 +357,7 @@ jobs:
 
       - name: 📦 Make AnyKernel3 (without KPM)
         run: |
-          git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1 AnyKernel3_NoKPM
+          git clone https://github.com/SiPetualang404/AnyKernel3.git --depth=1 AnyKernel3_NoKPM
           rm -rf ./AnyKernel3_NoKPM/.git
           rm -rf ./AnyKernel3_NoKPM/push.sh
           cd ./AnyKernel3_NoKPM
@@ -413,7 +394,7 @@ jobs:
             *.zip
             *.img
             
-      - name: Apply KPM Patch (SukiSU only)
+      - name: 📦 Apply KPM Patch (SukiSU only)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         run: |  
           cd $CONFIG/common/out/arch/arm64/boot
@@ -428,7 +409,7 @@ jobs:
       - name: 📦 Make AnyKernel3 (with KPM)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU' }}
         run: |
-         git clone https://github.com/JustHumant404/AnyKernel3.git --depth=1 AnyKernel3_KPM  
+         git clone https://github.com/SiPetualang404/AnyKernel3.git --depth=1 AnyKernel3_KPM  
          rm -rf ./AnyKernel3_KPM/.git
          rm -rf ./AnyKernel3_KPM/push.sh
          cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
@@ -442,18 +423,14 @@ jobs:
 
       - name: "📦 Package files | 打包文件"
         run: |
-          echo "📦📤 正在打包文件..."
-          echo '```Kernel Information' > release.txt
-          echo "内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}" >> release.txt
-          echo "KSU 版本：(${{ env.KSUVER }})" >> release.txt
-          echo '```' >> release.txt
-          # cat > release.txt << 'EOF'
-          # ```Kernel-Information
-          # 构建时间：$(TZ=Asia/Shanghai date)
-          # 内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}
-          # KSU 版本：(${{env.KSUVER}})
-          # ```
-          # EOF
+          echo "📦📤 Packing files..."
+          cat > release.txt << 'EOF'
+          ```Kernel-Information
+          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.sub_level }}
+          DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
+          SUSFS ඞ: v1.5.9
+          ```
+          EOF
 
       - name: "📤 Upload to telegram"
         uses: puernya/tg-bot-upload@v1
@@ -466,27 +443,4 @@ jobs:
                   *.zip
           caption-path: release.txt
           
-      # - name: 📤 Upload to telegram
-      #   run: |
-      #     if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
-      #       curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
-      #       pip3 install telethon
-            
-      #       shopt -s nullglob
-      #       files=(./*_${{ env.KSUVER }}_*.*)
-      #       if [ ${#files[@]} -eq 0 ]; then
-      #         echo "❌ Tidak ada file SuKiSU ditemukan!"
-      #         exit 1
-      #       fi
-      #       python3 ./buildbot.py "${files[@]}"
-      #     fi
-      #   shell: bash
-      #   env:
-      #     CHAT_ID: ${{secrets.CHAT_ID}}
-      #     BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-      #     MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
-      #     PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
-      #     KERNELVER: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
-      #     DRIVERKSU: ${{ inputs.kernelsu_variant }}
-      #     KSUVERSION: ${{ env.KSUVER }}
           
