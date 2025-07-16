@@ -1,4 +1,4 @@
-name: Clean workflow running records
+name: Clean workflows
 
 on:
   workflow_dispatch:
