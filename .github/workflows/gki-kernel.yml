@@ -20,12 +20,6 @@ on:
         options:
           - '6.6'
         default: '6.6'
-      sub_level:
-        required: true
-        type: string
-      os_patch_level:
-        required: true
-        type: string
       kernelsu_variant:
         description: "Select KernelSU"
         required: true
