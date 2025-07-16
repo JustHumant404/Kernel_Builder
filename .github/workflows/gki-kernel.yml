@@ -187,7 +187,7 @@ jobs:
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
           cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
           cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-          cp ../../kernel_patches/69_hide_stuff.patch ./common/
+          cp ../kernel_patches/69_hide_stuff.patch ./common/
 
           if [ "${{ inputs.kernelsu_variant }}" == "KernelSU-Next" ]; then
             echo "Applying SUSFS patches for KernelSU Next..."
