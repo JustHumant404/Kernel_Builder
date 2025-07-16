@@ -14,7 +14,7 @@ on:
           - android15
         default: android15
       kernel_version:
-        description: "Select Android version"
+        description: "Select Kernel version"
         required: true
         type: choice
         options:
@@ -70,7 +70,7 @@ jobs:
             echo "sub_level=98" >> $GITHUB_ENV
             echo "os_patch_level=2025-07" >> $GITHUB_ENV
           fi
-          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ env.sub_level }}"
+          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-$sub_level"
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
           echo "CONFIG set to: $CONFIG"
 
@@ -163,7 +163,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ env.os_patch_level }}"
+          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-$os_patch_level"
           repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
           DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
@@ -373,10 +373,9 @@ jobs:
           cd $CONFIG/common/out/arch/arm64/boot
           
           echo "Building boot.img"
-          BOOT_NAME="Boot_NoKPM_${{ env.KSUVER }}_SUKISU.img"
+          BOOT_NAME="Boot_NoKPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          #cp ./boot.img ../${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_BOOT_NoKPM_${{ env.KSUVER }}_SuKiSU.img
           cp ./$BOOT_NAME "${GITHUB_WORKSPACE}/"
           
       - name: 📤 Upload Boot & AnyKernel3 (without KPM)
@@ -420,7 +419,7 @@ jobs:
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
           ```Kernel-Information
-          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.sub_level }}
+          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.$sub_level
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
           SUSFS ඞ: v1.5.9
           ```
