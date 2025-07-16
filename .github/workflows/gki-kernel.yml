@@ -165,7 +165,7 @@ jobs:
           rm -rf ./msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
           if [ "${{ inputs.os_patch_level }}" == "lts" ]; then
-            SUBLEVEL=$(grep '^SUBLEVEL' "$CONFIG/common/Makefile" | cut -d '=' -f2 | xargs)
+            SUBLEVEL=$(grep '^SUBLEVEL' "./common/Makefile" | cut -d '=' -f2 | xargs)
             echo "SUBLEVEL=$SUBLEVEL" >> $GITHUB_ENV
             echo "✅ SUBLEVEL extracted: $SUBLEVEL"
           fi
