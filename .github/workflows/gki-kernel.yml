@@ -452,7 +452,7 @@ jobs:
           EOF
 
       - name: "📤 Upload to telegram"
-        if: ${{secrets.BOT_TOKEN != ""}}
+        if: ${{ secrets.BOT_TOKEN != '' }}
         uses: puernya/tg-bot-upload@v1
         with:
           bot-id: ${{ secrets.BOT_TOKEN }}
