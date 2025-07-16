@@ -164,6 +164,15 @@ jobs:
           rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
+          if [ "${{ inputs.os_patch_level }}" == "lts" ]; then
+            MAKEFILE_PATH=$(find . -name Makefile | grep -E 'kernel.*/Makefile' | head -n1)
+            echo "📄 Found Makefile at: $MAKEFILE_PATH"
+
+            SUBLEVEL=$(grep '^SUBLEVEL' "$MAKEFILE_PATH" | cut -d '=' -f2 | xargs)
+            echo "SUBLEVEL=$SUBLEVEL" >> $GITHUB_ENV
+            echo "✅ SUBLEVEL extracted: $SUBLEVEL"
+          fi
+    
       - name: Add KernelSU
         run: |
           echo "Changing to configuration directory: $CONFIG..."
