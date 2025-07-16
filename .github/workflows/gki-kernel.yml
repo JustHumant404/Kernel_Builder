@@ -444,7 +444,7 @@ jobs:
         run: |
           echo "📦📤 正在打包文件..."
           cat > release.txt << 'EOF'
-          ```Kernel Information
+          ```Kernel-Information
           构建时间：$(TZ=Asia/Shanghai date)
           内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}
           KSU 版本：(${{env.KSUVER}})
