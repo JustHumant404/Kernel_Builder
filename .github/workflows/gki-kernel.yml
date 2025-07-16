@@ -36,7 +36,7 @@ on:
         
 jobs:
   build-kernel-kernelsu-susfs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
@@ -440,27 +440,50 @@ jobs:
          name: AnyKernel3_KPM_${{ env.KSUVER }}_${{ inputs.kernelsu_variant }}
          path: ./AnyKernel3_KPM/*
 
-      - name: 📤 Upload to telegram
+      - name: "📦 Package files | 打包文件"
         run: |
-          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
-            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
-            pip3 install telethon
+          echo "📦📤 正在打包文件..."
+          cat > release.txt << 'EOF'
+          ```Kernel Information
+          构建时间：$(TZ=Asia/Shanghai date)
+          内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          KSU 版本：(${{env.KSUVER}})
+          ```
+          EOF
+
+      - name: "📤 Upload to telegram"
+        if: ${{secrets.BOT_TOKEN != ""}}
+        uses: puernya/tg-bot-upload@v1
+        with:
+          bot-id: ${{ secrets.BOT_TOKEN }}
+          chat-id: ${{ secrets.CHATT_ID }}
+          topic-id: ${{ secrets.MESSAGE_THREAD_ID }} 
+          file-path: |
+                  *.img
+                  *.zip
+          caption-path: release.txt
+          
+      # - name: 📤 Upload to telegram
+      #   run: |
+      #     if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+      #       curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
+      #       pip3 install telethon
             
-            shopt -s nullglob
-            files=(./*_${{ env.KSUVER }}_*.*)
-            if [ ${#files[@]} -eq 0 ]; then
-              echo "❌ Tidak ada file SuKiSU ditemukan!"
-              exit 1
-            fi
-            python3 ./buildbot.py "${files[@]}"
-          fi
-        shell: bash
-        env:
-          CHAT_ID: ${{secrets.CHAT_ID}}
-          BOT_TOKEN: ${{secrets.BOT_TOKEN}}
-          MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
-          PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
-          KERNELVER: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
-          DRIVERKSU: ${{ inputs.kernelsu_variant }}
-          KSUVERSION: ${{ env.KSUVER }}
+      #       shopt -s nullglob
+      #       files=(./*_${{ env.KSUVER }}_*.*)
+      #       if [ ${#files[@]} -eq 0 ]; then
+      #         echo "❌ Tidak ada file SuKiSU ditemukan!"
+      #         exit 1
+      #       fi
+      #       python3 ./buildbot.py "${files[@]}"
+      #     fi
+      #   shell: bash
+      #   env:
+      #     CHAT_ID: ${{secrets.CHAT_ID}}
+      #     BOT_TOKEN: ${{secrets.BOT_TOKEN}}
+      #     MESSAGE_THREAD_ID: ${{secrets.MESSAGE_THREAD_ID}}
+      #     PATHKERNEL: ${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}
+      #     KERNELVER: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+      #     DRIVERKSU: ${{ inputs.kernelsu_variant }}
+      #     KSUVERSION: ${{ env.KSUVER }}
           
