@@ -67,10 +67,11 @@ jobs:
       - name: Set CONFIG Environment Variable
         run: |
           if [ "${{ inputs.kernel_version }}" == "6.6" ]; then
-            echo "sub_level=98" >> $GITHUB_ENV
+            sub_level="98"
+            echo "sub_level=$sub_level" >> $GITHUB_ENV
             echo "os_patch_level=2025-07" >> $GITHUB_ENV
           fi
-          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-$sub_level"
+          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ env.sub_level }}"
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
           echo "CONFIG set to: $CONFIG"
 
