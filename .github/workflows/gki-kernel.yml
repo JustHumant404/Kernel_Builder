@@ -449,7 +449,7 @@ jobs:
             pip3 install python-telegram-bot
             
             shopt -s nullglob
-            files=(./${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}_*_${{ env.KSUVER }}_SuKiSU.*)
+            files=(./*_${{ env.KSUVER }}_*.*)
             if [ ${#files[@]} -eq 0 ]; then
               echo "❌ Tidak ada file SuKiSU ditemukan!"
               exit 1
