@@ -443,13 +443,17 @@ jobs:
       - name: "📦 Package files | 打包文件"
         run: |
           echo "📦📤 正在打包文件..."
-          cat > release.txt << 'EOF'
-          ```Kernel-Information
-          构建时间：$(TZ=Asia/Shanghai date)
-          内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}
-          KSU 版本：(${{env.KSUVER}})
-          ```
-          EOF
+          echo '```Kernel Information' > release.txt
+          echo "内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}" >> release.txt
+          echo "KSU 版本：(${{ env.KSUVER }})" >> release.txt
+          echo '```' >> release.txt
+          # cat > release.txt << 'EOF'
+          # ```Kernel-Information
+          # 构建时间：$(TZ=Asia/Shanghai date)
+          # 内核版本：${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          # KSU 版本：(${{env.KSUVER}})
+          # ```
+          # EOF
 
       - name: "📤 Upload to telegram"
         uses: puernya/tg-bot-upload@v1
