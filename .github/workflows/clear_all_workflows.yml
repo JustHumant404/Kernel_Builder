@@ -52,8 +52,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.APT_CACHE_DIR }}
-          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          key: apt-cache-${{ runner.os }}-clear-workflows
           restore-keys: |
+            apt-cache-${{ runner.os }}-clear-
             apt-cache-${{ runner.os }}-
       
       - name: Install Dependencies
