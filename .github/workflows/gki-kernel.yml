@@ -4,44 +4,31 @@ permissions:
   actions: write
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       android_version:
-        description: "Select Android version"
         required: true
-        type: choice
-        options:
-          - android15
-        default: android15
+        type: string
       kernel_version:
-        description: "Select Kernel version"
         required: true
-        type: choice
-        options:
-          - '6.6'
-        default: '6.6'
+        type: string
+      sub_level:
+        required: true
+        type: string
+      os_patch_level:
+        required: true
+        type: string
       kernelsu_variant:
-        description: "Select KernelSU"
         required: true
-        type: choice
-        options:
-          - Next
-          - SukiSU
-        default: SukiSU
+        type: string
       use_bbr:
-        description: "Enable the BBR Algorithm?"
         required: true
-        default: false
         type: boolean
       boot_nokpm:
-        description: "Generate boot without KPM?"
         required: true
-        default: false
         type: boolean
       ak3_kpm:
-        description: "Generate AK3 with KPM? (disable this if you want only AK3 without KPM)"
         required: true
-        default: true
         type: boolean
         
 jobs:
@@ -66,12 +53,7 @@ jobs:
 
       - name: Set CONFIG Environment Variable
         run: |
-          if [ "${{ inputs.kernel_version }}" == "6.6" ]; then
-            sub_level="98"
-            echo "sub_level=$sub_level" >> $GITHUB_ENV
-            echo "os_patch_level=2025-07" >> $GITHUB_ENV
-          fi
-          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ env.sub_level }}"
+          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.sub_level }}"
           echo "CONFIG=$CONFIG" >> $GITHUB_ENV
           echo "CONFIG set to: $CONFIG"
 
@@ -164,7 +146,7 @@ jobs:
 
           # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
-          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-$os_patch_level"
+          FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}"
           repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
           DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
@@ -420,7 +402,7 @@ jobs:
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
           ```Kernel-Information
-          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.$sub_level
+          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
           SUSFS ඞ: v1.5.9
           ```
