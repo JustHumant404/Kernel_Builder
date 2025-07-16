@@ -13,7 +13,7 @@ on:
       count:
         description: 'Maximum number of cleanup runs'
         required: false
-        default: '20'
+        default: '50'
       delete_failed:
         description: 'Delete failed run records?'
         required: false
@@ -43,10 +43,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install GitHub CLI and jq
+      - name: Setup APT Cache Path
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gh jq
+          echo "APT_CACHE_DIR=$HOME/apt-cache" >> $GITHUB_ENV
+          mkdir -p $HOME/apt-cache
+          
+      - name: Restore APT Cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.APT_CACHE_DIR }}
+          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          restore-keys: |
+            apt-cache-${{ runner.os }}-
+      
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update -o Dir::Cache="${{ env.APT_CACHE_DIR }}" -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends \
+            gh jq
 
       - name: Certification GitHub CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
