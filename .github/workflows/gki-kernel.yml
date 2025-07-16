@@ -161,11 +161,11 @@ jobs:
           # Sync repo and apply patches
           repo --version
           repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
-          rm $CONFIG/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
-          rm $CONFIG/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
+          rm -rf ./common/android/abi_gki_protected_exports_* || echo "No protected exports!"
+          rm -rf ./msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
           if [ "${{ inputs.os_patch_level }}" == "lts" ]; then
-            SUBLEVEL=$(grep '^SUBLEVEL' "$CONFIG/Makefile" | cut -d '=' -f2 | xargs)
+            SUBLEVEL=$(grep '^SUBLEVEL' "$CONFIG/common/Makefile" | cut -d '=' -f2 | xargs)
             echo "SUBLEVEL=$SUBLEVEL" >> $GITHUB_ENV
             echo "✅ SUBLEVEL extracted: $SUBLEVEL"
           fi
