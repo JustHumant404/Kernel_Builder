@@ -444,9 +444,7 @@ jobs:
         run: |
           if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
             curl -LSs https://github.com/${{ github.repository }}/raw/main/script/buildbot.py -o buildbot.py
-            curl -LSs https://github.com/${{ github.repository }}/raw/main/script/bot.py -o bot.py
             pip3 install telethon
-            pip3 install python-telegram-bot
             
             shopt -s nullglob
             files=(./*_${{ env.KSUVER }}_*.*)
@@ -455,7 +453,6 @@ jobs:
               exit 1
             fi
             python3 ./buildbot.py "${files[@]}"
-            python3 ./bot.py "${files[@]}"
           fi
         shell: bash
         env:
