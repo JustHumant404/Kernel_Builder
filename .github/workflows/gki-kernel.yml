@@ -55,7 +55,7 @@ on:
         default: false
         
 jobs:
-  build-kernel:
+  build-kernel-kernelsu-susfs:
     #Jika workflows stuck maka gunakan ubuntu-22.04
     runs-on: ubuntu-latest
     env:
@@ -237,7 +237,7 @@ jobs:
             cd ./KernelSU
             KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
             echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-            curl -LSs https://github.com/${{ github.repository }}/raw/main/.github/workflows/setup.sh -o setup.sh
+            curl -LSs https://github.com/$GITHUB_REPOSITORY/raw/main/.github/workflows/setup.sh -o setup.sh
             chmod +x setup.sh
             ./setup.sh
           else
@@ -422,7 +422,9 @@ jobs:
         run: |
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
-          ```Kernel-Information
+          > New Build Published!
+          > Horeee
+          ```Kernel Information
           KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
           SUSFS ඞ: v1.5.9
@@ -439,3 +441,4 @@ jobs:
                   *.img
                   *.zip
           caption-path: release.txt
+          parse-mode: MarkdownV2
