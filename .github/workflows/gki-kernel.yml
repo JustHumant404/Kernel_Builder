@@ -315,11 +315,11 @@ jobs:
           fi
 
           if [ "${{ inputs.android_version }}" = "android15" ]; then
-            sed -i 's/"drivers\/block\/zram\/zram\.ko",//g; s/"mm\/zsmalloc\.ko",//g' "kernel_workspace/common/modules.bzl"
+            sed -i 's/"drivers\/block\/zram\/zram\.ko",//g; s/"mm\/zsmalloc\.ko",//g' ./common/modules.bzl
             echo "CONFIG_MODULE_SIG_FORCE=n" >> ./common/arch/arm64/configs/gki_defconfig
           fi
 
-          if grep -q "CONFIG_ZSMALLOC=y" "$CONFIG_FILE" && grep -q "CONFIG_ZRAM=y" "$CONFIG_FILE"; then
+          if grep -q "CONFIG_ZSMALLOC=y" "./common/arch/arm64/configs/gki_defconfig" && grep -q "CONFIG_ZRAM=y" "./common/arch/arm64/configs/gki_defconfig"; then
             # Enable advanced compression support
             echo "CONFIG_CRYPTO_LZ4=y" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
