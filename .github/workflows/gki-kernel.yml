@@ -223,6 +223,8 @@ jobs:
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU-Ultra" ]; then
             echo "Applying SUSFS patches for SukiSU..."
             cd ./KernelSU
+            KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
+            echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
             curl -LSs https://github.com/${{ github.repository }}/raw/main/.github/workflows/setup.sh -o setup.sh
             chmod +x setup.sh
             ./setup.sh
