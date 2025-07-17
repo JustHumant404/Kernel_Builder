@@ -325,7 +325,7 @@ jobs:
 
       - name: Change Kernel Name
         run: |
-          echo "Changing to configuration directory: $CONFIG..."
+          echo "Changing to configuration directory..."
           cd kernel_workspace
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           sudo sed -i 's/-4k/-android15-8-g7f19c751e334-ab13222567-4k/g' ./common/arch/arm64/configs/gki_defconfig
@@ -422,7 +422,7 @@ jobs:
         run: |
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
-          > New Build Published!
+          > New Build Published
           > Horeee
           ```Kernel Information
           KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
