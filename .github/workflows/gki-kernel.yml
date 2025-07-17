@@ -494,11 +494,12 @@ jobs:
         run: |
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
-          > New Build Published
-          > Horeee
-          ```Kernel Information
+          **New Build Published!!**
+          > Kernel Builder: @SiPetualang404
+          ```
           KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
+          ZRAM: LZ4 v1.10.0
           SUSFS ඞ: v1.5.9
           ```
           EOF
