@@ -264,6 +264,76 @@ jobs:
             patch -p1 -F 3 < syscall_hooks.patch
           fi
 
+      - name: Upgrade LZ4 to v1.10.0
+        run: |
+          echo "Changing to configuration directory..."
+          cd kernel_workspace/common
+          
+          # Delete old files in lz4 library
+          files=(
+            "lib/lz4/lz4_compress.c"
+            "lib/lz4/lz4_decompress.c"
+            "lib/lz4/lz4defs.h"
+            "lib/lz4/lz4hc_compress.c"
+          )
+
+          for file in "${files[@]}"; do
+            if [ -e "$file" ]; then
+              rm -rf "$file"
+              echo "$file Deleted"
+            else
+              echo "$file Does not exist"
+            fi
+          done
+
+          cp -r ../../kernel_patches/zram/lz4/* ./lib/lz4/
+          cp -r ../../kernel_patches/zram/include/linux/* ./include/linux/
+          cp -r ../../kernel_patches/zram/${{ inputs.kernel_version }}/lz4_1.10.0.patch ./
+          patch -p1 -F 3 --fuzz=5 < lz4_1.10.0.patch || true
+
+          # Check if the file exists
+          if [ -f "fs/f2fs/Makefile" ]; then
+            # Check whether the specified line is contained
+            if ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
+              echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
+              echo "Added: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
+            else
+              echo "File already contains: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
+            fi
+          else
+            echo "File does not exist: fs/f2fs/Makefile"
+          fi
+
+      - name: 🔧 LZ4 v1.10.0 Configuration
+        run: |
+          echo "Adding LZ4 v1.10.0 Configuration settings to gki_defconfig..."
+          cd kernel_workspace
+          
+          if [ "${{ inputs.kernel_version }}" = "6.6" ]; then
+            echo "CONFIG_ZSMALLOC=y" >> ./common/arch/arm64/configs/gki_defconfig
+            sed -i 's/CONFIG_ZRAM=m/CONFIG_ZRAM=y/g' ./common/arch/arm64/configs/gki_defconfig
+          fi
+
+          if [ "${{ inputs.android_version }}" = "android15" ]; then
+            sed -i 's/"drivers\/block\/zram\/zram\.ko",//g; s/"mm\/zsmalloc\.ko",//g' "kernel_workspace/common/modules.bzl"
+            echo "CONFIG_MODULE_SIG_FORCE=n" >> ./common/arch/arm64/configs/gki_defconfig
+          fi
+
+          if grep -q "CONFIG_ZSMALLOC=y" "$CONFIG_FILE" && grep -q "CONFIG_ZRAM=y" "$CONFIG_FILE"; then
+            # Enable advanced compression support
+            echo "CONFIG_CRYPTO_LZ4=y" >> ./common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
+          
+            # File system level compression support
+            echo "CONFIG_F2FS_FS_COMPRESSION=y" >> ./common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_F2FS_FS_LZ4=y" >> ./common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_F2FS_FS_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_F2FS_FS_ZSTD=y" >> ./common/arch/arm64/configs/gki_defconfig
+          
+            # Kernel image compression configuration
+            echo "CONFIG_KERNEL_LZ4=y" >> ./common/arch/arm64/configs/gki_defconfig
+          fi
+          
       - name: Add Configuration Settings
         run: |
           echo "Changing to configuration directory..."
@@ -435,7 +505,7 @@ jobs:
         uses: puernya/tg-bot-upload@v1
         with:
           bot-id: ${{ secrets.BOT_TOKEN }}
-          chat-id: ${{ secrets.CHATT_ID }}
+          chat-id: ${{ secrets.CHAT_ID }}
           topic-id: ${{ secrets.MESSAGE_THREAD_ID }} 
           file-path: |
                   *.img
