@@ -67,7 +67,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.APT_CACHE_DIR }}
-          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}"
+          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
           restore-keys: |
             apt-cache-${{ runner.os }}-
       
