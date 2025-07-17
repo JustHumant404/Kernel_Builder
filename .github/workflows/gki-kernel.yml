@@ -4,32 +4,55 @@ permissions:
   actions: write
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       android_version:
+        description: "Select Android Version"
         required: true
-        type: string
+        type: choice
+        options:
+          - 'android16'
+          - 'android15'
+        default: 'android15'
       kernel_version:
+        description: "Select Kernel Version"
         required: true
-        type: string
-      sub_level:
-        required: true
-        type: string
+        type: choice
+        options:
+          - '6.12'
+          - '6.6'
+        default: '6.6'
       os_patch_level:
+        description: "Select Kernel Version"
         required: true
-        type: string
+        type: choice
+        options:
+          - '2025-07'
+          - 'lts'
+        default: '2025-07'
       kernelsu_variant:
+        description: "Select KernelSU"
         required: true
-        type: string
+        type: choice
+        options:
+          - KernelSU-Next
+          - SukiSU-Ultra
+        default: SukiSU-Ultra
       use_bbr:
+        description: 'Enable the BBR Algorithm?'
         required: true
         type: boolean
+        default: true
       boot_nokpm:
+        description: 'Generate boot without KPM?'
         required: true
         type: boolean
+        default: false
       ak3_kpm:
+        description: 'Generate AK3 with KPM? (disable this if you want only AK3 without KPM)'
         required: true
         type: boolean
+        default: false
         
 jobs:
   build-kernel-kernelsu-susfs:
@@ -52,12 +75,6 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
 
-      - name: Set CONFIG
-        run: |
-          CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}"
-          echo "CONFIG=$CONFIG" >> $GITHUB_ENV
-          echo "CONFIG set to: $CONFIG"
-
       - name: Setup APT Cache Path
         run: |
           echo "APT_CACHE_DIR=$HOME/apt-cache" >> $GITHUB_ENV
@@ -67,8 +84,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.APT_CACHE_DIR }}
-          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          key: apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}
           restore-keys: |
+            apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}-
+            apt-cache-${{ runner.os }}-${{ inputs.android_version }}-
             apt-cache-${{ runner.os }}-
       
       - name: Install Dependencies
@@ -82,15 +101,15 @@ jobs:
           ccache --version
           ccache --max-size=2G
           ccache --set-config=compression=true
-          echo "CCACHE_DIR=$HOME/.ccache_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}" >> $GITHUB_ENV
+          echo "CCACHE_DIR=$HOME/.ccache_${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}" >> $GITHUB_ENV
           
       - name: Restore ccache from cache
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ inputs.sub_level }}
+          key: ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}
           restore-keys: |
-            ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}.
+            ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}-
             ccache-${{ runner.os }}-${{ inputs.android_version }}-
             ccache-${{ runner.os }}-
 
@@ -143,10 +162,9 @@ jobs:
 
       - name: Initialize and Sync Kernel Source
         run: |
-          echo "Creating folder for configuration: $CONFIG..."
-          mkdir -p $CONFIG && cd $CONFIG
+          echo "Creating folder for configuration..."
+          mkdir kernel_workspace && cd kernel_workspace
 
-          # Initialize and sync kernel source
           echo "Initializing and syncing kernel source..."
           FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}"
           repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
@@ -165,17 +183,13 @@ jobs:
           rm -rf ./common/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm -rf ./msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
-          if [ "${{ inputs.os_patch_level }}" == "lts" ]; then
-            SUBLEVEL=$(grep '^SUBLEVEL' "./common/Makefile" | cut -d '=' -f2 | xargs)
-            echo "SUBLEVEL=$SUBLEVEL" >> $GITHUB_ENV
-          else
-            echo "SUBLEVEL=${{ inputs.sub_level }}" >> $GITHUB_ENV
-          fi
+          SUBLEVEL=$(grep '^SUBLEVEL' "./common/Makefile" | cut -d '=' -f2 | xargs)
+          echo "SUBLEVEL=$SUBLEVEL" >> $GITHUB_ENV
     
       - name: Add KernelSU
         run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd $CONFIG
+          echo "Changing to configuration directory..."
+          cd kernel_workspace
 
           if [ "${{ inputs.kernelsu_variant }}" == "KernelSU-Next" ]; then
             echo "Adding KernelSU Next..."
@@ -187,8 +201,8 @@ jobs:
 
       - name: Apply SUSFS Patches for KernelSU Variants
         run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd $CONFIG
+          echo "Changing to configuration directory..."
+          cd kernel_workspace
 
           echo "Applying SUSFS patches..."
           
@@ -239,8 +253,8 @@ jobs:
           
       - name: Apply Hooks Patches
         run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd $CONFIG/common
+          echo "Changing to configuration directory..."
+          cd kernel_workspace/common
 
           if [ "${{ inputs.kernelsu_variant }}" == "KernelSU-Next" ]; then
             echo "Applying hooks for KernelSU-Next..."
@@ -254,8 +268,8 @@ jobs:
 
       - name: Add Configuration Settings
         run: |
-          echo "Changing to configuration directory: $CONFIG..."
-          cd $CONFIG
+          echo "Changing to configuration directory..."
+          cd kernel_workspace
           echo "Adding configuration settings to gki_defconfig..."
 
           # Add KSU configuration settings
@@ -314,7 +328,7 @@ jobs:
       - name: Change Kernel Name
         run: |
           echo "Changing to configuration directory: $CONFIG..."
-          cd $CONFIG
+          cd kernel_workspace
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           sudo sed -i 's/-4k/-android15-8-g7f19c751e334-ab13222567-4k/g' ./common/arch/arm64/configs/gki_defconfig
       
@@ -327,7 +341,7 @@ jobs:
           command: |
             set -e
             set -x
-            cd $CONFIG/common
+            cd kernel_workspace/common
             
             echo "Building the kernel..."
             sed -i 's/BUILD_SYSTEM_DLKM=1/BUILD_SYSTEM_DLKM=0/' ./build.config.gki.aarch64
@@ -335,7 +349,7 @@ jobs:
             sed -i '/KMI_SYMBOL_LIST_STRICT_MODE/d' ./build.config.gki.aarch64
             
             export KBUILD_BUILD_TIMESTAMP="Tue Mar 11 12:18:17 UTC 2025"
-            export PATH="$GITHUB_WORKSPACE/$CONFIG/prebuilts/clang/host/linux-x86/clang-r510928/bin:$PATH"
+            export PATH="$GITHUB_WORKSPACE/kernel_workspace/prebuilts/clang/host/linux-x86/clang-r510928/bin:$PATH"
             export PATH="/usr/lib/ccache:$PATH"
 
             make -j$(nproc --all) LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CC="ccache clang" RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole LD=ld.lld HOSTLD=ld.lld O=out KCFLAGS+=-O2 gki_defconfig || { echo "make defconfig failed"; exit 1; }
@@ -349,7 +363,7 @@ jobs:
           cd ./AnyKernel3_NoKPM
           ZIP_NAME="AnyKernel3_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}.zip"
           echo "Creating zip file: $ZIP_NAME..."
-          cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
+          cp ../kernel_workspace/common/out/arch/arm64/boot/Image ./Image
           zip -q -r "../$ZIP_NAME" ./*
           
       - name: 📤 Upload AnyKernel3 (without KPM)
@@ -362,13 +376,13 @@ jobs:
       - name: 🛠️ Build Boot Image (without KPM)
         if: ${{ inputs.boot_nokpm }}
         run: |
-          cd $CONFIG/common/out/arch/arm64/boot
+          cd kernel_workspace/common/out/arch/arm64/boot
           
           echo "Building boot.img"
           BOOT_NAME="Boot_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
-          cp ./$BOOT_NAME "${GITHUB_WORKSPACE}/"
+          cp ./$BOOT_NAME "$GITHUB_WORKSPACE/"
           
       - name: 📤 Upload Boot & AnyKernel3 (without KPM)
         if: ${{ inputs.boot_nokpm }}
@@ -382,7 +396,7 @@ jobs:
       - name: 📦 Apply KPM Patch (SukiSU only)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU-Ultra' }}
         run: |  
-          cd $CONFIG/common/out/arch/arm64/boot
+          cd kernel_workspace/common/out/arch/arm64/boot
           TAG=$(curl -s https://api.github.com/repos/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases | \jq -r 'map(select(.prerelease)) | first | .tag_name')
           echo "Latest tag is: $TAG"
           curl -Ls -o patch_linux "https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/$TAG/patch_linux"
@@ -397,7 +411,7 @@ jobs:
          git clone https://github.com/SiPetualang404/AnyKernel3.git --depth=1 AnyKernel3_KPM  
          rm -rf ./AnyKernel3_KPM/.git
          rm -rf ./AnyKernel3_KPM/push.sh
-         cp ../$CONFIG/common/out/arch/arm64/boot/Image ./Image
+         cp ../kernel_workspace/common/out/arch/arm64/boot/Image ./Image
          
       - name: 📤 Upload AnyKernel3 (with KPM)
         if: ${{ inputs.ak3_kpm && inputs.kernelsu_variant == 'SukiSU-Ultra' }}
