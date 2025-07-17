@@ -19,7 +19,7 @@ on:
         description: 'Enable the BBR Algorithm?'
         required: true
         type: boolean
-        default: false
+        default: true
       boot_nokpm:
         description: 'Generate boot without KPM?'
         required: true
@@ -29,7 +29,7 @@ on:
         description: 'Generate AK3 with KPM? (disable this if you want only AK3 without KPM)'
         required: true
         type: boolean
-        default: true
+        default: false
         
 jobs:
   build-kernel-a15:
