@@ -55,7 +55,7 @@ on:
         default: false
         
 jobs:
-  build-kernel-kernelsu-susfs:
+  build-kernel:
     #Jika workflows stuck maka gunakan ubuntu-22.04
     runs-on: ubuntu-latest
     env:
@@ -88,7 +88,6 @@ jobs:
           restore-keys: |
             apt-cache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}-
             apt-cache-${{ runner.os }}-${{ inputs.android_version }}-
-            apt-cache-${{ runner.os }}-
       
       - name: Install Dependencies
         run: |
@@ -111,7 +110,6 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-${{ inputs.android_version }}-${{ inputs.kernel_version }}-
             ccache-${{ runner.os }}-${{ inputs.android_version }}-
-            ccache-${{ runner.os }}-
 
       - name: Cache toolchain
         id: cache-toolchain
