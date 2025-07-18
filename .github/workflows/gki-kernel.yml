@@ -186,7 +186,7 @@ jobs:
             curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
 
             cd KernelSU
-            cp "${GITHUB_WORKSPACE}/.github/workflows/setup.sh" ./
+            cp "../../.github/workflows/setup.sh" ./
             chmod +x setup.sh
             if [ ! -f "kernel/Makefile" ]; then
               echo ":: error ::kernel/Makefile not found"
