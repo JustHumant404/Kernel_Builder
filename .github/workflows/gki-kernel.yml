@@ -261,8 +261,8 @@ jobs:
       #   run: |
       #     cd kernel_workspace
       #     if [ "${{ inputs.use_bbr }}" == "true" ]; then
-      #       cp ../kernel_patches/zram/001-lz4.patch ./common
-      #       cp ../kernel_patches/zram/lz4armv8.S ./common/lib
+      #       cp ../kernel_patches/zram/001-lz4.patch ./common/
+      #       cp ../kernel_patches/zram/lz4armv8.S ./common/lib/
       #       cp ../kernel_patches/zram/002-zstd.patch ./common/
       #     fi
 
