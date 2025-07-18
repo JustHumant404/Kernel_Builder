@@ -282,40 +282,41 @@ jobs:
             git apply -p1 < 001-lz4.patch || true
             patch -p1 < 002-zstd.patch || true
           fi
-      #     # Delete old files in lz4 library
-      #     files=(
-      #       "lib/lz4/lz4_compress.c"
-      #       "lib/lz4/lz4_decompress.c"
-      #       "lib/lz4/lz4defs.h"
-      #       "lib/lz4/lz4hc_compress.c"
-      #     )
+          
+          # # Delete old files in lz4 library
+          # files=(
+          #   "lib/lz4/lz4_compress.c"
+          #   "lib/lz4/lz4_decompress.c"
+          #   "lib/lz4/lz4defs.h"
+          #   "lib/lz4/lz4hc_compress.c"
+          # )
 
-      #     for file in "${files[@]}"; do
-      #       if [ -e "$file" ]; then
-      #         rm -rf "$file"
-      #         echo "$file Deleted"
-      #       else
-      #         echo "$file Does not exist"
-      #       fi
-      #     done
+          # for file in "${files[@]}"; do
+          #   if [ -e "$file" ]; then
+          #     rm -rf "$file"
+          #     echo "$file Deleted"
+          #   else
+          #     echo "$file Does not exist"
+          #   fi
+          # done
 
-      #     cp -r ../../kernel_patches/zram/lz4/* ./lib/lz4/
-      #     cp -r ../../kernel_patches/zram/include/linux/* ./include/linux/
-      #     cp -r ../../kernel_patches/zram/${{ inputs.kernel_version }}/lz4_1.10.0.patch ./
-      #     patch -p1 -F 3 --fuzz=5 < lz4_1.10.0.patch || true
+          # cp -r ../../kernel_patches/zram/lz4/* ./lib/lz4/
+          # cp -r ../../kernel_patches/zram/include/linux/* ./include/linux/
+          # cp -r ../../kernel_patches/zram/${{ inputs.kernel_version }}/lz4_1.10.0.patch ./
+          # patch -p1 -F 3 --fuzz=5 < lz4_1.10.0.patch || true
 
-      #     # Check if the file exists
-      #     if [ -f "fs/f2fs/Makefile" ]; then
-      #       # Check whether the specified line is contained
-      #       if ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
-      #         echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
-      #         echo "Added: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
-      #       else
-      #         echo "File already contains: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
-      #       fi
-      #     else
-      #       echo "File does not exist: fs/f2fs/Makefile"
-      #     fi
+          # Check if the file exists
+          if [ -f "fs/f2fs/Makefile" ]; then
+            # Check whether the specified line is contained
+            if ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
+              echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
+              echo "Added: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
+            else
+              echo "File already contains: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
+            fi
+          else
+            echo "File does not exist: fs/f2fs/Makefile"
+          fi
 
       - name: 🔧 LZ4 v1.10.0 Configuration
         run: |
@@ -336,6 +337,7 @@ jobs:
             echo "CONFIG_CRYPTO_LZ4=y" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_CRYPTO_ZSTD=y" >> ./common/arch/arm64/configs/gki_defconfig
+            echo "CONFIG_CRYPTO_842=y" >> "$CONFIG_FILE"
             
             # File system level compression support
             echo "CONFIG_F2FS_FS_COMPRESSION=y" >> ./common/arch/arm64/configs/gki_defconfig
