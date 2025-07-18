@@ -101,6 +101,7 @@ jobs:
           ccache --max-size=2G
           ccache --set-config=compression=true
           echo "CCACHE_DIR=$HOME/.ccache_${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}" >> $GITHUB_ENV
+          mkdir -p $HOME/.ccache_${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}
           
       - name: Restore ccache from cache
         uses: actions/cache@v4
@@ -152,34 +153,21 @@ jobs:
           chmod a+rx ~/repo
           sudo mv ~/repo /usr/local/bin/repo
 
-      - name: Clone AnyKernel3 and Other Dependencies
+      - name: 📥 Initialize repo and sync
         run: |
-          echo "Cloning AnyKernel3 and other dependencies..."
-
-          # Clone repositories using the branch names
-          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}
-          git clone https://github.com/SiPetualang404/kernel_patches.git
-
-      - name: Initialize and Sync Kernel Source
-        run: |
-          echo "Creating folder for configuration..."
           mkdir kernel_workspace && cd kernel_workspace
 
-          echo "Initializing and syncing kernel source..."
           FORMATTED_BRANCH="${{ inputs.android_version }}-${{ inputs.kernel_version }}-${{ inputs.os_patch_level }}"
           repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-${FORMATTED_BRANCH} --repo-rev=v2.16
           REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${FORMATTED_BRANCH})
           DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
           
-          # Check if branch is deprecated
           if grep -q deprecated <<< $REMOTE_BRANCH; then
             echo "Found deprecated branch: $FORMATTED_BRANCH"
             sed -i "s/\"${FORMATTED_BRANCH}\"/\"deprecated\/${FORMATTED_BRANCH}\"/g" $DEFAULT_MANIFEST_PATH
           fi
-
-          # Sync repo and apply patches
-          repo --version
-          repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
+          
+          repo --trace sync -c -j$(nproc --all) --no-tags
           rm -rf ./common/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm -rf ./msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
@@ -188,7 +176,6 @@ jobs:
     
       - name: Add KernelSU
         run: |
-          echo "Changing to configuration directory..."
           cd kernel_workspace
 
           if [ "${{ inputs.kernelsu_variant }}" == "KernelSU-Next" ]; then
@@ -197,14 +184,24 @@ jobs:
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU-Ultra" ]; then
             echo "Adding KernelSU SukiSU..."
             curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
+
+            cd KernelSU
+            cp "${GITHUB_WORKSPACE}/.github/workflows/setup.sh" ./
+            chmod +x setup.sh
+            if [ ! -f "kernel/Makefile" ]; then
+              echo ":: error ::kernel/Makefile not found"
+              ls -la
+              exit 1
+            fi
+            ./setup.sh
           fi
 
       - name: Apply SUSFS Patches for KernelSU Variants
         run: |
-          echo "Changing to configuration directory..."
+          # Clone repositories
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}
+          git clone https://github.com/SiPetualang404/kernel_patches.git
           cd kernel_workspace
-
-          echo "Applying SUSFS patches..."
           
           # Copy SUSFS patches
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
@@ -237,11 +234,11 @@ jobs:
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU-Ultra" ]; then
             echo "Applying SUSFS patches for SukiSU..."
             cd ./KernelSU
-            KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
-            echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-            curl -LSs https://github.com/$GITHUB_REPOSITORY/raw/main/.github/workflows/setup.sh -o setup.sh
-            chmod +x setup.sh
-            ./setup.sh
+            # KSU_VERSION=$(expr $(git rev-list --count main 2>/dev/null || echo 13000) + 10700)
+            # echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
+            # curl -LSs https://github.com/$GITHUB_REPOSITORY/raw/main/.github/workflows/setup.sh -o setup.sh
+            # chmod +x setup.sh
+            # ./setup.sh
           else
             echo "Invalid KernelSU variant selected!"
             exit 1
@@ -253,7 +250,6 @@ jobs:
           
       - name: Apply Hooks Patches
         run: |
-          echo "Changing to configuration directory..."
           cd kernel_workspace/common
 
           if [ "${{ inputs.kernelsu_variant }}" == "KernelSU-Next" ]; then
@@ -268,7 +264,6 @@ jobs:
 
       - name: Upgrade LZ4 to v1.10.0
         run: |
-          echo "Changing to configuration directory..."
           cd kernel_workspace/common
           
           # Delete old files in lz4 library
@@ -308,7 +303,6 @@ jobs:
 
       - name: 🔧 LZ4 v1.10.0 Configuration
         run: |
-          echo "Adding LZ4 v1.10.0 Configuration settings to gki_defconfig..."
           cd kernel_workspace
           
           if [ "${{ inputs.kernel_version }}" = "6.6" ]; then
@@ -338,9 +332,7 @@ jobs:
           
       - name: Add Configuration Settings
         run: |
-          echo "Changing to configuration directory..."
           cd kernel_workspace
-          echo "Adding configuration settings to gki_defconfig..."
 
           # Add KSU configuration settings
           echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -397,7 +389,6 @@ jobs:
 
       - name: Change Kernel Name
         run: |
-          echo "Changing to configuration directory..."
           cd kernel_workspace
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           sudo sed -i 's/-4k/-android15-8-g7f19c751e334-ab13222567-4k/g' ./common/arch/arm64/configs/gki_defconfig
@@ -413,7 +404,6 @@ jobs:
             set -x
             cd kernel_workspace/common
             
-            echo "Building the kernel..."
             sed -i 's/BUILD_SYSTEM_DLKM=1/BUILD_SYSTEM_DLKM=0/' ./build.config.gki.aarch64
             sed -i '/MODULES_ORDER=android\/gki_aarch64_modules/d' ./build.config.gki.aarch64
             sed -i '/KMI_SYMBOL_LIST_STRICT_MODE/d' ./build.config.gki.aarch64
@@ -432,7 +422,6 @@ jobs:
           rm -rf ./AnyKernel3_NoKPM/push.sh
           cd ./AnyKernel3_NoKPM
           ZIP_NAME="AnyKernel3_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}.zip"
-          echo "Creating zip file: $ZIP_NAME..."
           cp ../kernel_workspace/common/out/arch/arm64/boot/Image ./Image
           zip -q -r "../$ZIP_NAME" ./*
           
@@ -448,7 +437,6 @@ jobs:
         run: |
           cd kernel_workspace/common/out/arch/arm64/boot
           
-          echo "Building boot.img"
           BOOT_NAME="Boot_NoKPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output $BOOT_NAME
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image $BOOT_NAME --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
@@ -490,7 +478,7 @@ jobs:
          name: AnyKernel3_KPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
          path: ./AnyKernel3_KPM/*
 
-      # - name: "📦 Package files | 打包文件"
+      # - name: 📦 Package files
       #   run: |
       #     echo "📦📤 Packing files..."
       #     cat > release.txt << 'EOF'
@@ -506,19 +494,18 @@ jobs:
 
       - name: "📦 Package files | 打包文件"
         run: |
-          echo "📦📤 Packing files..."
-          cat > release.txt << EOF
-          <b>New Build Published!!</b><br/>
-          &gt; Kernel Builder: @SiPetualang404<br/><br/>
-          <pre>
-          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
+          cat > release.txt << 'EOF'
+          \*\*New Build Published\!\!\*\*
+          \> Kernel Builder: \@SiPetualang404
+          \`\`\`
+          KernelVer：${{ inputs.android_version }}\-${{ inputs.kernel_version }}\.${{ env.SUBLEVEL }}
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
-          ZRAM: LZ4 v1.10.0
-          SUSFS ඞ: v1.5.9
-          </pre>
+          ZRAM: LZ4 v1\.10\.0
+          SUSFS ඞ: v1\.5\.9
+          \`\`\`
           EOF
-
-      - name: "📤 Upload to telegram"
+          
+      - name: 📤 Upload to telegram
         uses: puernya/tg-bot-upload@v1
         with:
           bot-id: ${{ secrets.BOT_TOKEN }}
@@ -528,4 +515,4 @@ jobs:
                   *.img
                   *.zip
           caption-path: release.txt
-          parse-mode: HTML
+          parse-mode: MarkdownV2
