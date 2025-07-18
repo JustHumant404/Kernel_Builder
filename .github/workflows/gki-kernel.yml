@@ -122,7 +122,7 @@ jobs:
           key: toolchain-${{ runner.os }}-v1
 
       - name: Download toolchain (if cache was not found)
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        if: ${{ inputs.boot_nokpm }} && steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
           git clone https://android.googlesource.com/kernel/prebuilts/build-tools -b main-kernel-build-2024 --depth 1 kernel-build-tools
           git clone https://android.googlesource.com/platform/system/tools/mkbootimg -b main-kernel-build-2024 --depth 1 mkbootimg
@@ -159,6 +159,7 @@ jobs:
           # Clone repositories using the branch names
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}
           git clone https://github.com/SiPetualang404/kernel_patches.git
+          git clone https://github.com/Xiaomichael/kernel_patches.git
 
       - name: Initialize and Sync Kernel Source
         run: |
@@ -490,19 +491,34 @@ jobs:
          name: AnyKernel3_KPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
          path: ./AnyKernel3_KPM/*
 
+      # - name: "📦 Package files | 打包文件"
+      #   run: |
+      #     echo "📦📤 Packing files..."
+      #     cat > release.txt << 'EOF'
+      #     **New Build Published!!**
+      #     > Kernel Builder: @SiPetualang404
+      #     ```
+      #     KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
+      #     DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
+      #     ZRAM: LZ4 v1.10.0
+      #     SUSFS ඞ: v1.5.9
+      #     ```
+      #     EOF
+
       - name: "📦 Package files | 打包文件"
         run: |
           echo "📦📤 Packing files..."
-          cat > release.txt << 'EOF'
-          **New Build Published!!**
-          > Kernel Builder: @SiPetualang404
-          ```
+          cat > release.txt << EOF
+          <b>New Build Published!!</b><br>
+          Kernel Builder: @SiPetualang404<br><br>
+          <pre>
           KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
           ZRAM: LZ4 v1.10.0
           SUSFS ඞ: v1.5.9
-          ```
+          </pre>
           EOF
+
 
       - name: "📤 Upload to telegram"
         uses: puernya/tg-bot-upload@v1
