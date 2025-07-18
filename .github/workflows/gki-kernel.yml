@@ -302,27 +302,12 @@ jobs:
           if [ "${{ inputs.use_bbr }}" == "true" ]; then
             cp ../kernel_patches/zram/001-lz4.patch ./common/
             cp ../kernel_patches/zram/lz4armv8.S ./common/lib/
-            cp ../kernel_patches/zram/002-zstd.patch ./common/
           fi
 
           cd ./common
           if [ "${{ inputs.use_bbr }}" == "true" ]; then
             echo "📦 应用lz4+zstd补丁..."
             git apply -p1 < 001-lz4.patch || true
-            patch -p1 < 002-zstd.patch || true
-          fi
-
-          # Check if the file exists
-          if [ -f "fs/f2fs/Makefile" ]; then
-            # Check whether the specified line is contained
-            if ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
-              echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
-              echo "Added: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
-            else
-              echo "File already contains: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
-            fi
-          else
-            echo "File does not exist: fs/f2fs/Makefile"
           fi
 
           
