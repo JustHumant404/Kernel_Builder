@@ -184,16 +184,6 @@ jobs:
           elif [ "${{ inputs.kernelsu_variant }}" == "SukiSU-Ultra" ]; then
             echo "Adding KernelSU SukiSU..."
             curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s susfs-main
-
-            cd KernelSU
-            cp "../../.github/workflows/setup.sh" ./
-            chmod +x setup.sh
-            if [ ! -f "kernel/Makefile" ]; then
-              echo ":: error ::kernel/Makefile not found"
-              ls -la
-              exit 1
-            fi
-            ./setup.sh
           fi
 
       - name: Apply SUSFS Patches for KernelSU Variants
