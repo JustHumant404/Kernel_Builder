@@ -7,9 +7,9 @@ on:
         type: choice
         description: 'Cleanup workflow name'
         required: true
-        default: 'Android15-6.6'
+        default: 'GKI Kernel Build'
         options:
-          - Android15-6.6
+          - GKI Kernel Build
       count:
         description: 'Maximum number of cleanup runs'
         required: false
