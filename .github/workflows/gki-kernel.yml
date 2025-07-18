@@ -123,7 +123,7 @@ jobs:
           key: toolchain-${{ runner.os }}-v1
 
       - name: Download toolchain (if cache was not found)
-        if: ${{ inputs.boot_nokpm }} && steps.cache-toolchain.outputs.cache-hit != 'true'
+        if: ${{ inputs.boot_nokpm && steps.cache-toolchain.outputs.cache-hit != 'true' }}
         run: |
           git clone https://android.googlesource.com/kernel/prebuilts/build-tools -b main-kernel-build-2024 --depth 1 kernel-build-tools
           git clone https://android.googlesource.com/platform/system/tools/mkbootimg -b main-kernel-build-2024 --depth 1 mkbootimg
