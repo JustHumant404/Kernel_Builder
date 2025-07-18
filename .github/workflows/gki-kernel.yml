@@ -490,19 +490,9 @@ jobs:
          name: AnyKernel3_KPM_${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
          path: ./AnyKernel3_KPM/*
 
-      - name: "📦 Package files | 打包文件"
-        run: |
-          echo "📦📤 Packing files..."
-          cat > release.txt << 'EOF'
-          \*\*New Build Published\!\!\*\*
-          \> Kernel Builder: \@SiPetualang404
-          \`\`\`
-          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
-          DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
-          ZRAM: LZ4 v1.10.0
-          SUSFS ඞ: v1.5.9
-          \`\`\`
-          EOF
+      # - name: "📦 Package files | 打包文件"
+      #   run: |
+      #     echo "📦📤 Packing files..."
       #     cat > release.txt << 'EOF'
       #     **New Build Published!!**
       #     > Kernel Builder: @SiPetualang404
@@ -514,6 +504,20 @@ jobs:
       #     ```
       #     EOF
 
+      - name: "📦 Package files | 打包文件"
+        run: |
+          echo "📦📤 Packing files..."
+          cat > release.txt << EOF
+          <b>New Build Published!!</b><br>
+          &gt; Kernel Builder: @SiPetualang404<br><br>
+          <pre>
+          KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
+          DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
+          ZRAM: LZ4 v1.10.0
+          SUSFS ඞ: v1.5.9
+          </pre>
+          EOF
+
       - name: "📤 Upload to telegram"
         uses: puernya/tg-bot-upload@v1
         with:
@@ -524,4 +528,4 @@ jobs:
                   *.img
                   *.zip
           caption-path: release.txt
-          parse-mode: MarkdownV2
+          parse-mode: HTML
