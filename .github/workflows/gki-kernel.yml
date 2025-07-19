@@ -509,7 +509,16 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.CHAT_ID }}" \
             -d parse_mode="MarkdownV2" \
-            --data-urlencode text@"release.txt"
+            -d "text=新推送 ${{ env.currentdate }}
+              **New Build Published!!**
+              > Kernel Builder: @SiPetualang404
+              ```Kernel Information
+              KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
+              DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
+              ZRAM: LZ4 v1.10.0
+              SUSFS ඞ: v1.5.9
+              ```
+            "
             
       - name: 📤 Upload to telegram
         uses: puernya/tg-bot-upload@v1
