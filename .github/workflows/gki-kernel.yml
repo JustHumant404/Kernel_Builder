@@ -258,58 +258,44 @@ jobs:
             patch -p1 -F 3 < syscall_hooks.patch
           fi
 
-      # - name: Upgrade LZ4 to v1.10.0
-      #   run: |
-      #     cd kernel_workspace/common
-      #     # Delete old files in lz4 library
-      #     files=(
-      #       "lib/lz4/lz4_compress.c"
-      #       "lib/lz4/lz4_decompress.c"
-      #       "lib/lz4/lz4defs.h"
-      #       "lib/lz4/lz4hc_compress.c"
-      #     )
-
-      #     for file in "${files[@]}"; do
-      #       if [ -e "$file" ]; then
-      #         rm -rf "$file"
-      #         echo "$file Deleted"
-      #       else
-      #         echo "$file Does not exist"
-      #       fi
-      #     done
-
-      #     cp -r ../../kernel_patches/zram/lz4/* ./lib/lz4/
-      #     cp -r ../../kernel_patches/zram/include/linux/* ./include/linux/
-      #     cp -r ../../kernel_patches/zram/${{ inputs.kernel_version }}/lz4_1.10.0.patch ./
-      #     patch -p1 -F 3 --fuzz=5 < lz4_1.10.0.patch || true
-
-      #     # Check if the file exists
-      #     if [ -f "fs/f2fs/Makefile" ]; then
-      #       # Check whether the specified line is contained
-      #       if ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
-      #         echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
-      #         echo "Added: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
-      #       else
-      #         echo "File already contains: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
-      #       fi
-      #     else
-      #       echo "File does not exist: fs/f2fs/Makefile"
-      #     fi
-
       - name: Upgrade LZ4 to v1.10.0
         run: |
-          cd kernel_workspace
-          if [ "${{ inputs.use_bbr }}" == "true" ]; then
-            cp ../kernel_patches/zram/001-lz4.patch ./common/
-            cp ../kernel_patches/zram/lz4armv8.S ./common/lib/
-          fi
+          cd kernel_workspace/common
+          
+          # Delete old files in lz4 library
+          files=(
+            "lib/lz4/lz4_compress.c"
+            "lib/lz4/lz4_decompress.c"
+            "lib/lz4/lz4defs.h"
+            "lib/lz4/lz4hc_compress.c"
+          )
 
-          cd ./common
-          if [ "${{ inputs.use_bbr }}" == "true" ]; then
-            echo "📦 应用lz4+zstd补丁..."
-            git apply -p1 < 001-lz4.patch || true
-          fi
+          for file in "${files[@]}"; do
+            if [ -e "$file" ]; then
+              rm -rf "$file"
+              echo "$file Deleted"
+            else
+              echo "$file Does not exist"
+            fi
+          done
 
+          cp -r ../../kernel_patches/zram/lz4/* ./lib/lz4/
+          cp -r ../../kernel_patches/zram/include/linux/* ./include/linux/
+          cp -r ../../kernel_patches/zram/${{ inputs.kernel_version }}/lz4_1.10.0.patch ./
+          patch -p1 -F 3 --fuzz=5 < lz4_1.10.0.patch || true
+
+          # Check if the file exists
+          if [ -f "fs/f2fs/Makefile" ]; then
+            # Check whether the specified line is contained
+            if ! grep -qF "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" "fs/f2fs/Makefile"; then
+              echo "f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o" >> "fs/f2fs/Makefile"
+              echo "Added: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
+            else
+              echo "File already contains: f2fs-\$(CONFIG_F2FS_IOSTAT) += iostat.o"
+            fi
+          else
+            echo "File does not exist: fs/f2fs/Makefile"
+          fi
           
       - name: 🔧 LZ4 v1.10.0 Configuration
         run: |
@@ -326,6 +312,7 @@ jobs:
           fi
 
           if grep -q "CONFIG_ZSMALLOC=y" "./common/arch/arm64/configs/gki_defconfig" && grep -q "CONFIG_ZRAM=y" "./common/arch/arm64/configs/gki_defconfig"; then
+            echo "Add Config for zram LZ4..."
             # Enable advanced compression support
             echo "CONFIG_CRYPTO_LZ4=y" >> ./common/arch/arm64/configs/gki_defconfig
             echo "CONFIG_CRYPTO_LZ4HC=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -494,7 +481,8 @@ jobs:
         run: |
           echo "📦📤 Packing files..."
           cat > release.txt << 'EOF'
-          > Kernel Builder: @SiPetualang404
+          **New Build Published\!\!**
+          >Kernel Builder: @SiPetualang404
           ```
           KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
           DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
@@ -503,22 +491,6 @@ jobs:
           ```
           EOF
           
-      - name: Send telegram message on push
-        run: |
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.CHAT_ID }}" \
-            -d parse_mode="MarkdownV2" \
-            -d "text=新推送 ${{ env.currentdate }}
-              **New Build Published!!**
-              > Kernel Builder: @SiPetualang404
-              ```Kernel Information
-              KernelVer：${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ env.SUBLEVEL }}
-              DriverKSU：${{ inputs.kernelsu_variant }} (${{ env.KSUVER }})
-              ZRAM: LZ4 v1.10.0
-              SUSFS ඞ: v1.5.9
-              ```
-            "
-            
       - name: 📤 Upload to telegram
         uses: puernya/tg-bot-upload@v1
         with:
